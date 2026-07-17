@@ -1,0 +1,585 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>우리 결혼 준비 — 청실홍실</title>
+<style>
+  @import url('https://cdnjs.cloudflare.com/ajax/libs/pretendard/1.3.9/variable/pretendardvariable.min.css');
+  @import url('https://fonts.googleapis.com/css2?family=Gowun+Batang:wght@400;700&display=swap');
+
+  :root{
+    --paper:#FAF9F6; --card:#FFFFFF; --ink:#26262E; --sub:#75716A; --faint:#A6A29A;
+    --line:#E8E4DC; --blue:#27427A; --blue-soft:#E9EEF7; --red:#B5424E; --red-soft:#F8ECEB;
+    --gold:#8A6D3B; --danger:#A33030;
+  }
+  *{ box-sizing:border-box; -webkit-tap-highlight-color:transparent; }
+  body{
+    margin:0; background:var(--paper); color:var(--ink);
+    font-family:'Pretendard Variable', Pretendard, -apple-system, 'Apple SD Gothic Neo', sans-serif;
+    font-size:14px; line-height:1.5;
+  }
+  .wrap{ max-width:720px; margin:0 auto; padding:0 16px 96px; }
+  button{ font-family:inherit; cursor:pointer; }
+  input, textarea{ font-family:inherit; font-size:14px; padding:10px 12px; border:1px solid var(--line);
+    border-radius:10px; background:#fff; color:var(--ink); width:100%; outline:none; }
+  input:focus, textarea:focus{ border-color:var(--blue); }
+  ::placeholder{ color:var(--faint); }
+  button:focus-visible, input:focus-visible, textarea:focus-visible{ outline:2px solid var(--blue); outline-offset:2px; }
+  a{ color:var(--blue); }
+  @media (prefers-reduced-motion: reduce){ *{ transition:none !important; } }
+
+  /* 헤더 */
+  header{ padding:28px 4px 18px; display:flex; align-items:baseline; justify-content:space-between; gap:12px; }
+  .eyebrow{ font-size:12px; letter-spacing:.18em; color:var(--gold); font-weight:700; }
+  h1{ margin:4px 0 0; font-family:'Gowun Batang', serif; font-size:26px; font-weight:700; letter-spacing:-.01em; }
+  .dday{ text-align:right; }
+  .dday b{ font-family:'Gowun Batang', serif; font-size:24px; font-weight:700; color:var(--red); display:block; }
+  .dday span{ font-size:11px; color:var(--faint); }
+
+  /* 탭 바 */
+  nav.tabbar{ display:flex; gap:8px; overflow-x:auto; padding:2px 2px 14px; position:sticky; top:0;
+    background:var(--paper); z-index:5; scrollbar-width:none; }
+  nav.tabbar::-webkit-scrollbar{ display:none; }
+  .tab{ flex-shrink:0; font-size:13px; font-weight:500; padding:8px 14px; border-radius:999px;
+    border:1px solid var(--line); background:#fff; color:var(--ink); display:flex; align-items:center; gap:6px; transition:all .15s; }
+  .tab.active{ background:var(--ink); color:#fff; border-color:var(--ink); font-weight:700; }
+  .tab.muted{ color:var(--faint); }
+  .tab .dot{ width:6px; height:6px; border-radius:99px; }
+  .tab.active .dot{ background:#fff !important; }
+
+  /* 카드 공통 */
+  .grid{ display:grid; gap:14px; }
+  .card{ background:var(--card); border:1px solid var(--line); border-radius:16px; padding:18px 20px; }
+  .row{ display:flex; justify-content:space-between; align-items:baseline; gap:10px; }
+  .label{ font-size:12px; color:var(--sub); font-weight:600; }
+
+  /* 써머리 */
+  .total{ font-family:'Gowun Batang', serif; font-size:28px; font-weight:700; color:var(--blue); }
+  .pend{ font-size:15px; font-weight:600; color:var(--red); }
+  .grand{ font-size:15px; font-weight:700; }
+  .divider{ border-top:1px dashed var(--line); margin-top:12px; padding-top:12px; }
+  .thread-meta{ display:flex; justify-content:space-between; font-size:11px; color:var(--faint); margin-top:4px; }
+  h2.sec{ margin:6px 4px 2px; font-size:13px; font-weight:700; color:var(--sub); letter-spacing:.04em; }
+  .catrow{ width:100%; text-align:left; background:var(--card); border:1px solid var(--line); border-radius:12px;
+    padding:13px 16px; display:flex; justify-content:space-between; align-items:center; gap:10px; }
+  .catrow .name{ font-size:14px; font-weight:700; }
+  .catrow .desc{ font-size:12px; color:var(--sub); margin-top:2px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; max-width:60vw; }
+  .catrow .amt{ font-weight:700; color:var(--blue); font-size:14px; white-space:nowrap; }
+  .catrow .warn{ font-size:11px; color:var(--danger); margin-top:2px; }
+
+  /* 배지·칩 */
+  .badge{ font-size:11px; font-weight:700; padding:3px 10px; border-radius:999px; white-space:nowrap; border:1px solid var(--line); }
+  .chip{ font-size:11px; font-weight:600; padding:3px 9px; border-radius:999px; border:1px solid var(--line);
+    background:#fff; color:var(--faint); transition:all .15s; }
+  .st-candidate{ background:#F1EFEA; color:var(--sub); border-color:var(--line); }
+  .st-considering{ background:var(--red-soft); color:var(--red); border-color:#E7C9CC; }
+  .st-decided{ background:var(--blue); color:#fff; border-color:var(--blue); }
+  .st-dropped{ background:#F5F4F1; color:var(--faint); border-color:var(--line); }
+
+  /* 옵션 카드 */
+  .opt{ background:var(--card); border:1px solid var(--line); border-radius:14px; padding:15px 16px; }
+  .opt.decided{ border-color:var(--blue); box-shadow:0 2px 12px rgba(39,66,122,.09); }
+  .opt.dropped{ opacity:.55; }
+  .opt .nm{ font-size:15px; font-weight:700; }
+  .opt.dropped .nm{ text-decoration:line-through; }
+  .opt .pr{ font-size:15px; font-weight:600; margin-top:2px; }
+  .opt.decided .pr{ color:var(--blue); }
+  .opt .memo{ margin:10px 0 0; font-size:13px; color:var(--sub); line-height:1.55; white-space:pre-wrap; }
+  .opt .actions{ display:flex; gap:6px; margin-top:12px; flex-wrap:wrap; align-items:center; }
+  .opt .actions .spacer{ margin-left:auto; display:flex; gap:4px; }
+  .txtbtn{ font-size:12px; color:var(--sub); background:none; border:none; padding:4px 6px; }
+  .txtbtn.faint{ color:var(--faint); }
+
+  /* 폼 */
+  .form{ background:var(--blue-soft); border:1px solid rgba(39,66,122,.14); border-radius:16px; padding:18px; display:grid; gap:10px; }
+  .form .title{ font-size:13px; font-weight:700; color:var(--blue); }
+  .form .btns{ display:flex; gap:8px; justify-content:flex-end; }
+  .btn-ghost{ font-size:13px; padding:9px 16px; border-radius:10px; border:1px solid var(--line); background:#fff; color:var(--sub); }
+  .btn-primary{ font-size:13px; font-weight:700; padding:9px 18px; border-radius:10px; border:none; background:var(--blue); color:#fff; }
+  .add-opt{ font-size:14px; font-weight:600; padding:13px; border-radius:14px; border:1.5px dashed rgba(39,66,122,.4);
+    background:#fff; color:var(--blue); width:100%; }
+  .empty{ text-align:center; padding:36px 0; color:var(--faint); font-size:13px; }
+
+  /* 핀번호 게이트 */
+  #gate{ position:fixed; inset:0; background:var(--paper); z-index:100; display:none;
+    align-items:center; justify-content:center; padding:24px; }
+  .gate-card{ width:100%; max-width:320px; text-align:center; }
+  .gate-card .eyebrow{ margin-bottom:2px; }
+  .gate-card h2{ margin:4px 0 20px; font-family:'Gowun Batang', serif; font-size:22px; font-weight:700; }
+  #pin-input{ text-align:center; font-size:22px; letter-spacing:.5em; padding:12px; }
+  #pin-btn{ width:100%; margin-top:10px; font-size:14px; font-weight:700; padding:12px;
+    border-radius:12px; border:none; background:var(--blue); color:#fff; }
+  #pin-err{ font-size:12px; color:var(--danger); margin-top:10px; min-height:16px; }
+
+  /* 토스트 */
+  #toast{ position:fixed; bottom:24px; left:50%; transform:translateX(-50%); background:var(--ink); color:#fff;
+    padding:10px 18px; border-radius:999px; font-size:13px; z-index:50; display:none; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <div>
+      <div class="eyebrow">청실홍실</div>
+      <h1>우리 결혼 준비</h1>
+    </div>
+    <div class="dday" id="dday"></div>
+  </header>
+  <nav class="tabbar" id="tabbar"></nav>
+  <main id="main"></main>
+</div>
+<div id="gate">
+  <div class="gate-card">
+    <div class="eyebrow">청실홍실</div>
+    <h2>우리 결혼 준비</h2>
+    <input id="pin-input" type="password" inputmode="numeric" maxlength="4" placeholder="····"
+      autocomplete="off" oninput="if(this.value.length===4)App.tryPin()"
+      onkeydown="if(event.key==='Enter')App.tryPin()" />
+    <button id="pin-btn" onclick="App.tryPin()">열기</button>
+    <div id="pin-err"></div>
+  </div>
+</div>
+<div id="toast"></div>
+
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-database-compat.js"></script>
+<script>
+"use strict";
+/* ────────────────────────────────────────────
+   결혼 준비 플래너 — 청실홍실 (단일 HTML)
+   저장: Claude 아티팩트(window.storage) → localStorage 자동 전환
+   ──────────────────────────────────────────── */
+const KEY = "wedding-planner-v1";
+
+/* ══════════════════════════════════════════════
+   ★ Firebase 설정 — 아래 두 곳만 수정하세요 ★
+   1) FIREBASE_CONFIG: Firebase 콘솔에서 복사한 값 붙여넣기
+   2) ROOM_KEY: 둘만 아는 긴 비밀 문자열로 변경 (일종의 비밀번호)
+   설정 전에는 자동으로 이 기기(localStorage)에만 저장됩니다.
+   ══════════════════════════════════════════════ */
+const FIREBASE_CONFIG = {
+  apiKey: "AIzaSyDflsQIGyPuhb-WQONtfplBL9fMgcf5JKo",
+  authDomain: "wedding-yw.firebaseapp.com",
+  databaseURL: "https://wedding-yw-default-rtdb.asia-southeast1.firebasedatabase.app",
+  projectId: "wedding-yw",
+  storageBucket: "wedding-yw.firebasestorage.app",
+  messagingSenderId: "5258107555",
+  appId: "1:5258107555:web:a382106df7d31bc4593d16",
+  measurementId: "G-FM3SHDXP8Q"
+};
+/* ── 핀번호 잠금 ──
+   입력한 핀번호로 저장 방 주소를 계산하기 때문에,
+   코드를 열어봐도 핀번호 없이는 데이터에 접근할 수 없습니다. */
+const PIN_VERIFY_HASH = "c731c04d9352eae3d248886b6e527de0e759a743fdd2a837b116d7a371987115";
+const PIN_SALT_VERIFY = "wp-verify-";
+const PIN_SALT_ROOM = "wp-room-wedding-yw-";
+
+const FB_ENABLED = FIREBASE_CONFIG.apiKey && !FIREBASE_CONFIG.apiKey.includes("여기에");
+let fbRef = null, lastWritten = null, pendingRemote = null;
+if (FB_ENABLED && typeof firebase !== "undefined"){
+  try { firebase.initializeApp(FIREBASE_CONFIG); }
+  catch(e){ console.error("Firebase 초기화 실패:", e); }
+}
+
+async function sha256hex(s){
+  const buf = await crypto.subtle.digest("SHA-256", new TextEncoder().encode(s));
+  return Array.from(new Uint8Array(buf)).map(x=>x.toString(16).padStart(2,"0")).join("");
+}
+
+const STATUS = {
+  candidate:  { label:"후보" },
+  considering:{ label:"고민중" },
+  decided:    { label:"결정" },
+  dropped:    { label:"탈락" },
+};
+const ORDER = ["candidate","considering","decided","dropped"];
+
+const DEFAULT_NAMES = ["식장","반지·예물","스튜디오","드레스","메이크업","자동차","신혼여행","집 인테리어","가전","청첩장","청모","혼주 예복·한복"];
+
+const uid = () => Math.random().toString(36).slice(2,9) + Date.now().toString(36);
+const esc = (s) => String(s ?? "").replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;").replace(/'/g,"&#39;");
+
+const fmtWon = (n) => {
+  if (n == null || isNaN(n)) return "—";
+  if (n >= 100000000){
+    const eok = Math.floor(n/100000000), man = Math.round((n%100000000)/10000);
+    return man > 0 ? eok + "억 " + man.toLocaleString() + "만원" : eok + "억원";
+  }
+  if (n >= 10000 && n % 10000 === 0) return (n/10000).toLocaleString() + "만원";
+  if (n >= 10000) return (n/10000).toLocaleString(undefined,{maximumFractionDigits:1}) + "만원";
+  return n.toLocaleString() + "원";
+};
+const parsePrice = (s) => { const d = String(s).replace(/[^\d]/g,""); return d ? parseInt(d,10) : null; };
+const withCommas = (s) => { const d = String(s).replace(/[^\d]/g,""); return d ? parseInt(d,10).toLocaleString() : ""; };
+
+/* ── 저장 어댑터 (Firebase → 아티팩트 → localStorage 순) ── */
+const store = {
+  async get(k){
+    if (fbRef){
+      try { const snap = await fbRef.get(); return snap.exists() ? snap.val() : null; } catch(e){ console.error(e); return null; }
+    }
+    if (typeof window.storage !== "undefined" && window.storage?.get){
+      try { const r = await window.storage.get(k); return r?.value ?? null; } catch(e){ return null; }
+    }
+    try { return localStorage.getItem(k); } catch(e){ return null; }
+  },
+  async set(k,v){
+    if (fbRef){
+      try { lastWritten = v; await fbRef.set(v); return true; } catch(e){ console.error(e); return false; }
+    }
+    if (typeof window.storage !== "undefined" && window.storage?.set){
+      try { await window.storage.set(k,v); return true; } catch(e){ /* fallthrough */ }
+    }
+    try { localStorage.setItem(k,v); return true; } catch(e){ return false; }
+  }
+};
+
+/* ── 상태 ── */
+let state = {
+  weddingDate: "",
+  categories: DEFAULT_NAMES.map((name,i)=>({ id:"c"+(i+1), name, budgetCap:null, options:[] })),
+};
+let tab = "summary";
+let formState = null; // {catId, editingId}
+let saveTimer = null;
+
+function persist(){
+  clearTimeout(saveTimer);
+  saveTimer = setTimeout(async ()=>{
+    const ok = await store.set(KEY, JSON.stringify(state));
+    if (!ok) toast("저장에 실패했어요.");
+  }, 400);
+}
+function toast(msg){
+  const t = document.getElementById("toast");
+  t.textContent = msg; t.style.display = "block";
+  setTimeout(()=>{ t.style.display = "none"; }, 2500);
+}
+
+/* ── 계산 ── */
+function calc(){
+  const rows = state.categories.map(c=>{
+    const decided = c.options.filter(o=>o.status==="decided");
+    const pending = c.options.filter(o=>o.status==="candidate"||o.status==="considering");
+    const decidedSum = decided.reduce((s,o)=>s+(o.price||0),0);
+    const prices = pending.map(o=>o.price).filter(p=>p!=null);
+    return { cat:c, decided, pending, decidedSum,
+      min: prices.length?Math.min(...prices):null,
+      max: prices.length?Math.max(...prices):null,
+      over: c.budgetCap!=null && decidedSum>c.budgetCap };
+  });
+  const confirmed = rows.reduce((s,r)=>s+r.decidedSum,0);
+  const open = rows.filter(r=>r.decided.length===0 && r.pending.length>0);
+  return {
+    rows, confirmed,
+    pendMin: open.reduce((s,r)=>s+(r.min||0),0),
+    pendMax: open.reduce((s,r)=>s+(r.max||0),0),
+    activeCats: rows.filter(r=>r.decided.length>0||r.pending.length>0),
+    doneCats: rows.filter(r=>r.decided.length>0),
+  };
+}
+
+/* ── 렌더 ── */
+function render(){
+  renderHeader();
+  renderTabs();
+  const main = document.getElementById("main");
+  if (tab === "summary") main.innerHTML = summaryHTML();
+  else {
+    const c = state.categories.find(x=>x.id===tab);
+    main.innerHTML = c ? categoryHTML(c) : summaryHTML();
+  }
+}
+
+function renderHeader(){
+  const el = document.getElementById("dday");
+  if (!state.weddingDate){ el.innerHTML = ""; return; }
+  const diff = Math.ceil((new Date(state.weddingDate+"T00:00:00") - new Date().setHours(0,0,0,0)) / 86400000);
+  const label = diff > 0 ? "D-"+diff : diff === 0 ? "D-Day" : "D+"+(-diff);
+  el.innerHTML = '<b>'+label+'</b><span>'+esc(state.weddingDate)+'</span>';
+}
+
+function renderTabs(){
+  const bar = document.getElementById("tabbar");
+  let html = '<button class="tab'+(tab==="summary"?" active":"")+'" onclick="App.setTab(\'summary\')">Summary</button>';
+  for (const c of state.categories){
+    const hasD = c.options.some(o=>o.status==="decided");
+    const hasP = c.options.some(o=>o.status==="considering"||o.status==="candidate");
+    const dot = hasD ? "var(--blue)" : hasP ? "var(--red)" : null;
+    html += '<button class="tab'+(tab===c.id?" active":"")+'" onclick="App.setTab(\''+c.id+'\')">'
+          + (dot ? '<span class="dot" style="background:'+dot+'"></span>' : '')
+          + esc(c.name) + '</button>';
+  }
+  html += '<button class="tab muted" onclick="App.addCategory()">＋ 항목</button>';
+  bar.innerHTML = html;
+}
+
+/* 청실홍실 진행 실 */
+function threadsSVG(pct){
+  const p = Math.max(0, Math.min(100, pct));
+  const blue = "M4 14 C 40 14, 40 6, 76 6 S 112 14, 148 14 S 184 6, 220 6 S 256 14, 292 14";
+  const red  = "M4 6 C 40 6, 40 14, 76 14 S 112 6, 148 6 S 184 14, 220 14 S 256 6, 292 6";
+  return '<svg viewBox="0 0 296 20" style="width:100%;height:22px;display:block" aria-hidden="true">'
+    + '<path d="'+red+'" fill="none" stroke="var(--line)" stroke-width="2" stroke-linecap="round"/>'
+    + '<path d="'+blue+'" fill="none" stroke="var(--line)" stroke-width="2" stroke-linecap="round"/>'
+    + '<path d="'+red+'" fill="none" stroke="var(--red)" stroke-width="2.4" stroke-linecap="round" pathLength="100" stroke-dasharray="'+p+' 100" style="transition:stroke-dasharray .6s ease"/>'
+    + '<path d="'+blue+'" fill="none" stroke="var(--blue)" stroke-width="2.4" stroke-linecap="round" pathLength="100" stroke-dasharray="'+p+' 100" style="transition:stroke-dasharray .6s ease"/>'
+    + '</svg>';
+}
+
+function summaryHTML(){
+  const c = calc();
+  const pct = c.activeCats.length ? Math.round(c.doneCats.length / c.activeCats.length * 100) : 0;
+  const hasPend = c.pendMax > 0;
+
+  let html = '<div class="grid">';
+
+  html += '<section class="card">'
+    + '<div class="row"><span class="label">확정 지출</span><span class="total">'+fmtWon(c.confirmed)+'</span></div>'
+    + (hasPend ? '<div class="row" style="margin-top:6px"><span class="label">미정 항목 예상</span><span class="pend">+'+fmtWon(c.pendMin)+' ~ '+fmtWon(c.pendMax)+'</span></div>' : '')
+    + '<div class="row divider"><span class="label">전체 예상</span><span class="grand">'
+    + (hasPend ? fmtWon(c.confirmed+c.pendMin)+' ~ '+fmtWon(c.confirmed+c.pendMax) : fmtWon(c.confirmed))
+    + '</span></div>'
+    + '<div style="margin-top:16px">'+threadsSVG(pct)
+    + '<div class="thread-meta"><span>결정 완료 '+c.doneCats.length+' / 진행 중 '+c.activeCats.length+'</span><span>'+pct+'%</span></div></div>'
+    + '</section>';
+
+  html += '<section class="card" style="display:flex;align-items:center;justify-content:space-between;gap:12px;padding:14px 20px">'
+    + '<span class="label" style="font-size:13px">예식일</span>'
+    + '<input type="date" value="'+esc(state.weddingDate)+'" onchange="App.setDate(this.value)" style="width:auto;padding:8px 10px" />'
+    + '</section>';
+
+  html += '<section class="grid" style="gap:8px"><h2 class="sec">항목별 현황</h2>';
+  for (const r of c.rows){
+    const accent = r.decided.length ? "var(--blue)" : r.pending.length ? "var(--red)" : "var(--line)";
+    let desc, right;
+    if (r.decided.length){
+      desc = esc(r.decided.map(o=>o.name).join(", "));
+      right = '<span class="amt">'+fmtWon(r.decidedSum)+'</span>';
+    } else if (r.pending.length){
+      desc = '고민중 '+r.pending.length+'개 · '+(r.min!=null ? fmtWon(r.min)+(r.min!==r.max?' ~ '+fmtWon(r.max):'') : '금액 미입력');
+      right = '<span class="badge st-considering">고민중</span>';
+    } else {
+      desc = '아직 후보가 없어요';
+      right = '<span style="font-size:12px;color:var(--faint)">비어 있음</span>';
+    }
+    html += '<button class="catrow" style="border-left:3px solid '+accent+(r.over?';border-color:var(--danger)':'')+'" onclick="App.setTab(\''+r.cat.id+'\')">'
+      + '<div style="min-width:0"><div class="name">'+esc(r.cat.name)+'</div><div class="desc">'+desc+'</div>'
+      + (r.over ? '<div class="warn">예산 '+fmtWon(r.cat.budgetCap)+' 초과</div>' : '')
+      + '</div><div style="flex-shrink:0;text-align:right">'+right+'</div></button>';
+  }
+  html += '</section></div>';
+  return html;
+}
+
+function badgeHTML(status){
+  return '<span class="badge st-'+status+'">'+STATUS[status].label+'</span>';
+}
+
+function categoryHTML(c){
+  const decided = c.options.filter(o=>o.status==="decided");
+  const active  = c.options.filter(o=>o.status==="candidate"||o.status==="considering");
+  const dropped = c.options.filter(o=>o.status==="dropped");
+  const decidedSum = decided.reduce((s,o)=>s+(o.price||0),0);
+  const over = c.budgetCap!=null && decidedSum>c.budgetCap;
+  const forming = formState && formState.catId === c.id;
+
+  let html = '<div class="grid">';
+
+  html += '<section class="card" style="padding:16px 20px">'
+    + '<div style="display:flex;justify-content:space-between;align-items:center;gap:10px">'
+    + '<h2 style="margin:0;font-family:\'Gowun Batang\',serif;font-size:20px;font-weight:700">'+esc(c.name)+'</h2>'
+    + '<button class="txtbtn faint" onclick="App.removeCategory(\''+c.id+'\')">항목 삭제</button></div>'
+    + '<div style="display:flex;align-items:center;gap:10px;margin-top:12px;flex-wrap:wrap">'
+    + '<label class="label">예산 상한</label>'
+    + '<input inputmode="numeric" placeholder="예: 5,000,000" value="'+(c.budgetCap!=null?c.budgetCap.toLocaleString():'')+'"'
+    + ' oninput="this.value=App.commas(this.value)" onchange="App.setBudget(\''+c.id+'\', this.value)"'
+    + ' style="width:150px;padding:8px 10px" />'
+    + '<span style="font-size:12px;color:var(--faint)">원</span>'
+    + (decided.length ? '<span style="margin-left:auto;font-size:13px;font-weight:700;color:'+(over?'var(--danger)':'var(--blue)')+'">결정 '+fmtWon(decidedSum)+'</span>' : '')
+    + '</div></section>';
+
+  if (forming){
+    const editing = formState.editingId ? c.options.find(o=>o.id===formState.editingId) : null;
+    html += '<section class="form">'
+      + '<div class="title">'+(editing ? '옵션 수정' : '새 옵션 추가')+'</div>'
+      + '<input id="f-name" placeholder="업체/상품명 *" value="'+esc(editing?.name||'')+'" />'
+      + '<input id="f-price" placeholder="금액 (원)" inputmode="numeric" value="'+(editing?.price!=null?editing.price.toLocaleString():'')+'" oninput="this.value=App.commas(this.value)" />'
+      + '<textarea id="f-memo" rows="2" placeholder="메모 — 장단점, 상담 내용 등" style="resize:vertical">'+esc(editing?.memo||'')+'</textarea>'
+      + '<input id="f-link" placeholder="링크 (선택)" value="'+esc(editing?.link||'')+'" />'
+      + '<div class="btns"><button class="btn-ghost" onclick="App.cancelForm()">취소</button>'
+      + '<button class="btn-primary" onclick="App.saveOption()">'+(editing?'수정 저장':'추가')+'</button></div>'
+      + '</section>';
+  } else {
+    html += '<button class="add-opt" onclick="App.openForm(\''+c.id+'\', null)">＋ 옵션 추가</button>';
+  }
+
+  if (!c.options.length && !forming){
+    html += '<div class="empty">아직 후보가 없어요. 위 버튼으로 첫 옵션을 추가해 보세요.</div>';
+  }
+
+  for (const o of [...decided, ...active, ...dropped]){
+    html += optionHTML(c, o);
+  }
+  html += '</div>';
+  return html;
+}
+
+function optionHTML(c, o){
+  const cls = o.status==="decided" ? " decided" : o.status==="dropped" ? " dropped" : "";
+  let html = '<article class="opt'+cls+'">'
+    + '<div style="display:flex;justify-content:space-between;align-items:flex-start;gap:10px">'
+    + '<div style="min-width:0"><div class="nm">'+esc(o.name)+'</div>'
+    + '<div class="pr">'+(o.price!=null ? fmtWon(o.price) : '<span style="color:var(--faint);font-size:13px">금액 미입력</span>')+'</div></div>'
+    + badgeHTML(o.status) + '</div>';
+  if (o.memo) html += '<p class="memo">'+esc(o.memo)+'</p>';
+  if (o.link){
+    const href = /^https?:\/\//.test(o.link) ? o.link : 'https://'+o.link;
+    html += '<a href="'+esc(href)+'" target="_blank" rel="noreferrer" style="display:inline-block;margin-top:8px;font-size:12px;font-weight:600;word-break:break-all">링크 열기 ↗</a>';
+  }
+  html += '<div class="actions">';
+  for (const s of ORDER){
+    const on = o.status === s;
+    html += '<button class="chip'+(on?' st-'+s:'')+'" onclick="App.setStatus(\''+c.id+'\',\''+o.id+'\',\''+s+'\')">'+STATUS[s].label+'</button>';
+  }
+  html += '<span class="spacer">'
+    + '<button class="txtbtn" onclick="App.openForm(\''+c.id+'\',\''+o.id+'\')">수정</button>'
+    + '<button class="txtbtn faint" onclick="App.removeOption(\''+c.id+'\',\''+o.id+'\')">삭제</button>'
+    + '</span></div></article>';
+  return html;
+}
+
+/* ── 액션 ── */
+window.App = {
+  commas: withCommas,
+  setTab(id){ tab = id; formState = null; render(); window.scrollTo({top:0}); },
+  setDate(v){ state.weddingDate = v; persist(); render(); },
+  setBudget(catId, v){
+    const c = state.categories.find(x=>x.id===catId);
+    c.budgetCap = parsePrice(v);
+    persist(); render();
+  },
+  openForm(catId, optId){ formState = { catId, editingId: optId }; render();
+    setTimeout(()=>document.getElementById("f-name")?.focus(), 0); },
+  cancelForm(){ formState = null; if (pendingRemote){ state = pendingRemote; pendingRemote = null; } render(); },
+  saveOption(){
+    const name = document.getElementById("f-name").value.trim();
+    if (!name){ document.getElementById("f-name").focus(); return; }
+    const payload = {
+      name,
+      price: parsePrice(document.getElementById("f-price").value),
+      memo: document.getElementById("f-memo").value.trim(),
+      link: document.getElementById("f-link").value.trim(),
+    };
+    const c = state.categories.find(x=>x.id===formState.catId);
+    if (formState.editingId){
+      Object.assign(c.options.find(o=>o.id===formState.editingId), payload);
+    } else {
+      c.options.push({ id: uid(), status: "candidate", ...payload });
+    }
+    formState = null; pendingRemote = null; persist(); render();
+  },
+  setStatus(catId, optId, status){
+    const o = state.categories.find(x=>x.id===catId).options.find(x=>x.id===optId);
+    o.status = (o.status === status) ? "candidate" : status;
+    persist(); render();
+  },
+  removeOption(catId, optId){
+    if (!confirm("이 옵션을 삭제할까요?")) return;
+    const c = state.categories.find(x=>x.id===catId);
+    c.options = c.options.filter(o=>o.id!==optId);
+    persist(); render();
+  },
+  addCategory(){
+    const name = prompt("추가할 항목 이름을 입력하세요");
+    if (!name || !name.trim()) return;
+    const id = uid();
+    state.categories.push({ id, name: name.trim(), budgetCap: null, options: [] });
+    tab = id; persist(); render();
+  },
+  removeCategory(catId){
+    const c = state.categories.find(x=>x.id===catId);
+    if (!confirm("'"+c.name+"' 항목과 안의 옵션 "+c.options.length+"개를 모두 삭제할까요?")) return;
+    state.categories = state.categories.filter(x=>x.id!==catId);
+    tab = "summary"; persist(); render();
+  },
+};
+
+/* ── 초기화 ── */
+async function startApp(){
+  try {
+    const raw = await store.get(KEY);
+    if (raw){
+      const parsed = JSON.parse(raw);
+      if (parsed && Array.isArray(parsed.categories)){
+        // 마이그레이션: 가전 항목 보장
+        if (!parsed.categories.some(c=>c.name==="가전")){
+          const idx = parsed.categories.findIndex(c=>c.name==="집 인테리어");
+          parsed.categories.splice(idx>=0?idx+1:parsed.categories.length, 0, { id: uid(), name:"가전", budgetCap:null, options:[] });
+        }
+        state = parsed;
+      }
+    }
+  } catch(e){ /* 첫 실행 */ }
+  render();
+
+  /* 실시간 동기화: 상대방이 수정하면 내 화면도 즉시 갱신 */
+  if (fbRef){
+    fbRef.on("value", (snap)=>{
+      const raw = snap.val();
+      if (!raw || raw === lastWritten) return;
+      try {
+        const parsed = JSON.parse(raw);
+        if (parsed && Array.isArray(parsed.categories)){
+          if (formState){ pendingRemote = parsed; }   // 입력 중이면 폼 닫힌 뒤 반영
+          else { state = parsed; render(); }
+        }
+      } catch(e){}
+    });
+    toast("공유 저장소에 연결됐어요");
+  }
+}
+
+/* ── 핀번호 게이트 ── */
+function connectRoom(room){
+  if (FB_ENABLED && typeof firebase !== "undefined"){
+    try { fbRef = firebase.database().ref("planners/" + room); } catch(e){ console.error(e); }
+  }
+  document.getElementById("gate").style.display = "none";
+  startApp();
+}
+
+App.tryPin = async function(){
+  const input = document.getElementById("pin-input");
+  const err = document.getElementById("pin-err");
+  const pin = input.value.trim();
+  if (pin.length < 4) return;
+  try {
+    const v = await sha256hex(PIN_SALT_VERIFY + pin);
+    if (v !== PIN_VERIFY_HASH){
+      err.textContent = "핀번호가 맞지 않아요";
+      input.value = ""; input.focus();
+      return;
+    }
+    const room = "wp-" + (await sha256hex(PIN_SALT_ROOM + pin)).slice(0, 40);
+    try { localStorage.setItem("wp-room", room); } catch(e){}
+    connectRoom(room);
+  } catch(e){
+    err.textContent = "이 환경에서는 잠금 해제를 지원하지 않아요";
+  }
+};
+
+(function boot(){
+  let saved = null;
+  try { saved = localStorage.getItem("wp-room"); } catch(e){}
+  if (saved){
+    connectRoom(saved);   // 이 기기에서 이미 인증됨 → 바로 열기
+  } else {
+    document.getElementById("gate").style.display = "flex";
+    setTimeout(()=>document.getElementById("pin-input")?.focus(), 100);
+  }
+})();
+</script>
+</body>
+</html>

@@ -17,7 +17,7 @@
   body{
     margin:0; background:var(--paper); color:var(--ink);
     font-family:'Pretendard Variable', Pretendard, -apple-system, 'Apple SD Gothic Neo', sans-serif;
-    font-size:14px; line-height:1.5;
+    font-size:14px; line-height:1.5; overflow-x:hidden;
   }
   .wrap{ max-width:720px; margin:0 auto; padding:0 16px 96px; }
   button{ font-family:inherit; cursor:pointer; }
@@ -78,18 +78,39 @@
   .st-dropped{ background:#F5F4F1; color:var(--faint); border-color:var(--line); }
 
   /* 옵션 카드 */
-  .opt{ background:var(--card); border:1px solid var(--line); border-radius:14px; padding:15px 16px; }
+  .opt{ background:var(--card); border:1px solid var(--line); border-radius:14px; padding:15px 16px; cursor:pointer; min-width:0; }
   .opt.decided{ border-color:var(--blue); box-shadow:0 2px 12px rgba(39,66,122,.09); }
   .opt.dropped{ opacity:.55; }
-  .opt .nm{ font-size:15px; font-weight:700; }
+  .opt .nm{ font-size:15px; font-weight:700; overflow-wrap:anywhere; }
   .opt.dropped .nm{ text-decoration:line-through; }
   .opt .pr{ font-size:15px; font-weight:600; margin-top:2px; }
   .opt.decided .pr{ color:var(--blue); }
-  .opt .memo{ margin:10px 0 0; font-size:13px; color:var(--sub); line-height:1.55; white-space:pre-wrap; }
+  .opt .memo{ margin:10px 0 0; font-size:13px; color:var(--sub); line-height:1.55; white-space:pre-wrap;
+    overflow-wrap:anywhere; display:-webkit-box; -webkit-line-clamp:3; -webkit-box-orient:vertical; overflow:hidden; }
   .opt .actions{ display:flex; gap:6px; margin-top:12px; flex-wrap:wrap; align-items:center; }
   .opt .actions .spacer{ margin-left:auto; display:flex; gap:4px; }
   .txtbtn{ font-size:12px; color:var(--sub); background:none; border:none; padding:4px 6px; }
   .txtbtn.faint{ color:var(--faint); }
+  .opt a{ overflow-wrap:anywhere; }
+  .catrow .desc{ overflow-wrap:anywhere; }
+
+  /* 옵션 상세 보기 */
+  #detail{ position:fixed; inset:0; background:var(--paper); z-index:90; display:none; overflow-y:auto;
+    -webkit-overflow-scrolling:touch; }
+  #detail .inner{ max-width:720px; margin:0 auto; padding:0 16px 80px; }
+  .dt-top{ display:flex; justify-content:space-between; align-items:center; padding:14px 0 10px;
+    position:sticky; top:0; background:var(--paper); z-index:2; }
+  .dt-back{ font-size:14px; font-weight:600; background:none; border:none; color:var(--sub); padding:6px 8px 6px 0; }
+  .dt-name{ font-family:'Gowun Batang', serif; font-size:24px; font-weight:700; margin:6px 0 4px; overflow-wrap:anywhere; }
+  .dt-cat{ font-size:12px; color:var(--gold); font-weight:700; letter-spacing:.06em; }
+  .dt-price{ font-size:20px; font-weight:700; color:var(--blue); }
+  .dt-chips{ display:flex; gap:6px; margin-top:14px; flex-wrap:wrap; }
+  .dt-memo{ font-size:15px; line-height:1.75; color:var(--ink); white-space:pre-wrap; overflow-wrap:anywhere;
+    margin-top:18px; padding-top:16px; border-top:1px solid var(--line); }
+  .dt-photos{ display:grid; grid-template-columns:repeat(3, 1fr); gap:8px; margin-top:18px; }
+  .dt-photos img{ width:100%; aspect-ratio:1/1; object-fit:cover; border-radius:10px;
+    border:1px solid var(--line); cursor:pointer; background:#F1EFEA; }
+  .dt-actions{ display:flex; gap:8px; margin-top:24px; flex-wrap:wrap; }
 
   /* 폼 */
   .form{ background:var(--blue-soft); border:1px solid rgba(39,66,122,.14); border-radius:16px; padding:18px; display:grid; gap:10px; }
@@ -100,6 +121,16 @@
   .add-opt{ font-size:14px; font-weight:600; padding:13px; border-radius:14px; border:1.5px dashed rgba(39,66,122,.4);
     background:#fff; color:var(--blue); width:100%; }
   .empty{ text-align:center; padding:36px 0; color:var(--faint); font-size:13px; }
+
+  /* 사진 */
+  .thumbs{ display:flex; gap:6px; margin-top:10px; flex-wrap:wrap; }
+  .thumb{ width:64px; height:64px; object-fit:cover; border-radius:8px; border:1px solid var(--line);
+    cursor:pointer; background:#F1EFEA; }
+  #lightbox{ position:fixed; inset:0; background:rgba(20,20,24,.93); z-index:200; display:none;
+    align-items:center; justify-content:center; flex-direction:column; gap:14px; padding:20px; }
+  #lightbox img{ max-width:100%; max-height:78vh; border-radius:10px; }
+  #lb-del{ font-size:13px; padding:8px 16px; border-radius:999px; border:1px solid rgba(255,255,255,.4);
+    background:none; color:#fff; }
 
   /* 핀번호 게이트 */
   #gate{ position:fixed; inset:0; background:var(--paper); z-index:100; display:none;
@@ -139,6 +170,11 @@
     <button id="pin-btn" onclick="App.tryPin()">열기</button>
     <div id="pin-err"></div>
   </div>
+</div>
+<div id="detail"><div class="inner" id="detail-inner"></div></div>
+<div id="lightbox" onclick="if(event.target.id==='lightbox')App.closePhoto()">
+  <img id="lb-img" alt="" />
+  <button id="lb-del" onclick="App.deletePhoto()">사진 삭제</button>
 </div>
 <div id="toast"></div>
 
@@ -185,6 +221,59 @@ if (FB_ENABLED && typeof firebase !== "undefined"){
 async function sha256hex(s){
   const buf = await crypto.subtle.digest("SHA-256", new TextEncoder().encode(s));
   return Array.from(new Uint8Array(buf)).map(x=>x.toString(16).padStart(2,"0")).join("");
+}
+
+/* ── 사진 저장 ──
+   사진은 본문 데이터와 분리 저장해서, 목록 동기화가 무거워지지 않게 합니다. */
+let fbPhotos = null;
+const photoCache = {};
+const MAX_PHOTOS_PER_OPTION = 4;
+
+async function photoGet(id){
+  if (photoCache[id]) return photoCache[id];
+  if (fbPhotos){
+    try { const s = await fbPhotos.child(id).get(); const v = s.exists() ? s.val() : null;
+      if (v) photoCache[id] = v; return v; } catch(e){ return null; }
+  }
+  return (state.photos || {})[id] || null;
+}
+async function photoSet(id, data){
+  photoCache[id] = data;
+  if (fbPhotos){ try { await fbPhotos.child(id).set(data); return true; } catch(e){ return false; } }
+  state.photos = state.photos || {}; state.photos[id] = data; return true;
+}
+async function photoDel(id){
+  delete photoCache[id];
+  if (fbPhotos){ try { await fbPhotos.child(id).remove(); } catch(e){} }
+  if (state.photos) delete state.photos[id];
+}
+function resizeImage(file, maxDim, quality){
+  return new Promise((res, rej)=>{
+    const r = new FileReader();
+    r.onload = ()=>{
+      const img = new Image();
+      img.onload = ()=>{
+        let w = img.width, h = img.height;
+        const m = Math.max(w, h);
+        if (m > maxDim){ const k = maxDim / m; w = Math.round(w*k); h = Math.round(h*k); }
+        const cv = document.createElement("canvas");
+        cv.width = w; cv.height = h;
+        cv.getContext("2d").drawImage(img, 0, 0, w, h);
+        res(cv.toDataURL("image/jpeg", quality));
+      };
+      img.onerror = rej;
+      img.src = r.result;
+    };
+    r.onerror = rej;
+    r.readAsDataURL(file);
+  });
+}
+async function hydratePhotos(){
+  const imgs = document.querySelectorAll("img[data-pid]");
+  for (const el of imgs){
+    const src = await photoGet(el.getAttribute("data-pid"));
+    if (src) el.src = src;
+  }
 }
 
 const STATUS = {
@@ -290,6 +379,8 @@ function render(){
     const c = state.categories.find(x=>x.id===tab);
     main.innerHTML = c ? categoryHTML(c) : summaryHTML();
   }
+  renderDetail();
+  hydratePhotos();
 }
 
 function renderHeader(){
@@ -428,7 +519,7 @@ function categoryHTML(c){
 
 function optionHTML(c, o){
   const cls = o.status==="decided" ? " decided" : o.status==="dropped" ? " dropped" : "";
-  let html = '<article class="opt'+cls+'">'
+  let html = '<article class="opt'+cls+'" onclick="if(!event.target.closest(\'button,a,input,img\'))App.openDetail(\''+c.id+'\',\''+o.id+'\')">'
     + '<div style="display:flex;justify-content:space-between;align-items:flex-start;gap:10px">'
     + '<div style="min-width:0"><div class="nm">'+esc(o.name)+'</div>'
     + '<div class="pr">'+(o.price!=null ? fmtWon(o.price) : '<span style="color:var(--faint);font-size:13px">금액 미입력</span>')+'</div></div>'
@@ -438,16 +529,74 @@ function optionHTML(c, o){
     const href = /^https?:\/\//.test(o.link) ? o.link : 'https://'+o.link;
     html += '<a href="'+esc(href)+'" target="_blank" rel="noreferrer" style="display:inline-block;margin-top:8px;font-size:12px;font-weight:600;word-break:break-all">링크 열기 ↗</a>';
   }
+  if (o.photos && o.photos.length){
+    html += '<div class="thumbs">';
+    for (const pid of o.photos){
+      html += '<img class="thumb" data-pid="'+esc(pid)+'" alt="사진" onclick="App.openPhoto(\''+c.id+'\',\''+o.id+'\',\''+esc(pid)+'\')" />';
+    }
+    html += '</div>';
+  }
+  html += '<input type="file" accept="image/*" multiple id="ph-'+o.id+'" style="display:none" onchange="App.addPhoto(\''+c.id+'\',\''+o.id+'\', this)" />';
   html += '<div class="actions">';
   for (const s of ORDER){
     const on = o.status === s;
     html += '<button class="chip'+(on?' st-'+s:'')+'" onclick="App.setStatus(\''+c.id+'\',\''+o.id+'\',\''+s+'\')">'+STATUS[s].label+'</button>';
   }
   html += '<span class="spacer">'
+    + '<button class="txtbtn" onclick="document.getElementById(\'ph-'+o.id+'\').click()">사진</button>'
     + '<button class="txtbtn" onclick="App.openForm(\''+c.id+'\',\''+o.id+'\')">수정</button>'
     + '<button class="txtbtn faint" onclick="App.removeOption(\''+c.id+'\',\''+o.id+'\')">삭제</button>'
     + '</span></div></article>';
   return html;
+}
+
+/* ── 옵션 상세 보기 ── */
+let detailState = null;
+
+function renderDetail(){
+  const box = document.getElementById("detail");
+  if (!detailState){ box.style.display = "none"; return; }
+  const c = state.categories.find(x=>x.id===detailState.catId);
+  const o = c ? c.options.find(x=>x.id===detailState.optId) : null;
+  if (!o){ detailState = null; box.style.display = "none"; return; }
+
+  let html = '<div class="dt-top"><button class="dt-back" onclick="App.closeDetail()">← 목록으로</button>'
+    + badgeHTML(o.status) + '</div>'
+    + '<div class="dt-cat">'+esc(c.name)+'</div>'
+    + '<div class="dt-name"'+(o.status==="dropped"?' style="text-decoration:line-through;color:var(--faint)"':'')+'>'+esc(o.name)+'</div>'
+    + '<div class="dt-price">'+(o.price!=null ? fmtWon(o.price) : '<span style="color:var(--faint);font-size:14px;font-weight:500">금액 미입력</span>')+'</div>';
+
+  html += '<div class="dt-chips">';
+  for (const s of ORDER){
+    const on = o.status === s;
+    html += '<button class="chip'+(on?' st-'+s:'')+'" style="font-size:12px;padding:5px 12px" onclick="App.setStatus(\''+c.id+'\',\''+o.id+'\',\''+s+'\')">'+STATUS[s].label+'</button>';
+  }
+  html += '</div>';
+
+  if (o.link){
+    const href = /^https?:\/\//.test(o.link) ? o.link : 'https://'+o.link;
+    html += '<a href="'+esc(href)+'" target="_blank" rel="noreferrer" style="display:inline-block;margin-top:14px;font-size:13px;font-weight:600">링크 열기 ↗</a>';
+  }
+
+  if (o.memo) html += '<div class="dt-memo">'+esc(o.memo)+'</div>';
+
+  if (o.photos && o.photos.length){
+    html += '<div class="dt-photos">';
+    for (const pid of o.photos){
+      html += '<img data-pid="'+esc(pid)+'" alt="사진" onclick="App.openPhoto(\''+c.id+'\',\''+o.id+'\',\''+esc(pid)+'\')" />';
+    }
+    html += '</div>';
+  }
+
+  html += '<input type="file" accept="image/*" multiple id="phd-'+o.id+'" style="display:none" onchange="App.addPhoto(\''+c.id+'\',\''+o.id+'\', this)" />'
+    + '<div class="dt-actions">'
+    + '<button class="btn-ghost" onclick="document.getElementById(\'phd-'+o.id+'\').click()">＋ 사진 추가</button>'
+    + '<button class="btn-ghost" onclick="App.openForm(\''+c.id+'\',\''+o.id+'\')">내용 수정</button>'
+    + '<button class="btn-ghost" style="color:var(--danger)" onclick="App.removeOption(\''+c.id+'\',\''+o.id+'\')">삭제</button>'
+    + '</div>';
+
+  document.getElementById("detail-inner").innerHTML = html;
+  box.style.display = "block";
 }
 
 /* ── 액션 ── */
@@ -460,7 +609,10 @@ window.App = {
     c.budgetCap = parsePrice(v);
     persist(); render();
   },
-  openForm(catId, optId){ formState = { catId, editingId: optId }; render();
+  openDetail(catId, optId){ detailState = { catId, optId }; renderDetail(); hydratePhotos(); },
+  closeDetail(){ detailState = null; document.getElementById("detail").style.display = "none"; },
+  openForm(catId, optId){ formState = { catId, editingId: optId }; detailState = null;
+    document.getElementById("detail").style.display = "none"; render();
     setTimeout(()=>document.getElementById("f-name")?.focus(), 0); },
   cancelForm(){ formState = null; if (pendingRemote){ state = pendingRemote; pendingRemote = null; } render(); },
   saveOption(){
@@ -488,7 +640,54 @@ window.App = {
   removeOption(catId, optId){
     if (!confirm("이 옵션을 삭제할까요?")) return;
     const c = state.categories.find(x=>x.id===catId);
-    c.options = c.options.filter(o=>o.id!==optId);
+    const o = c.options.find(x=>x.id===optId);
+    if (o?.photos) o.photos.forEach(pid=>photoDel(pid));
+    c.options = c.options.filter(x=>x.id!==optId);
+    persist(); render();
+  },
+  async addPhoto(catId, optId, input){
+    const files = Array.from(input.files || []);
+    input.value = "";
+    if (!files.length) return;
+    const o = state.categories.find(x=>x.id===catId).options.find(x=>x.id===optId);
+    o.photos = o.photos || [];
+    if (o.photos.length + files.length > MAX_PHOTOS_PER_OPTION){
+      toast("사진은 옵션당 최대 "+MAX_PHOTOS_PER_OPTION+"장까지예요");
+      files.length = Math.max(0, MAX_PHOTOS_PER_OPTION - o.photos.length);
+      if (!files.length) return;
+    }
+    toast("사진 올리는 중…");
+    for (const f of files){
+      try {
+        const data = await resizeImage(f, 1000, 0.72);
+        const pid = "p" + uid();
+        const ok = await photoSet(pid, data);
+        if (ok) o.photos.push(pid);
+        else { toast("사진 업로드에 실패했어요"); return; }
+      } catch(e){ toast("사진을 읽지 못했어요"); }
+    }
+    persist(); render();
+  },
+  openPhoto(catId, optId, pid){
+    this._lb = { catId, optId, pid };
+    const lb = document.getElementById("lightbox");
+    const img = document.getElementById("lb-img");
+    img.src = photoCache[pid] || "";
+    if (!photoCache[pid]) photoGet(pid).then(v=>{ if (v) img.src = v; });
+    lb.style.display = "flex";
+  },
+  closePhoto(){
+    document.getElementById("lightbox").style.display = "none";
+    this._lb = null;
+  },
+  deletePhoto(){
+    if (!this._lb) return;
+    if (!confirm("이 사진을 삭제할까요?")) return;
+    const { catId, optId, pid } = this._lb;
+    const o = state.categories.find(x=>x.id===catId)?.options.find(x=>x.id===optId);
+    if (o?.photos) o.photos = o.photos.filter(x=>x!==pid);
+    photoDel(pid);
+    this.closePhoto();
     persist(); render();
   },
   addCategory(){
@@ -501,6 +700,7 @@ window.App = {
   removeCategory(catId){
     const c = state.categories.find(x=>x.id===catId);
     if (!confirm("'"+c.name+"' 항목과 안의 옵션 "+c.options.length+"개를 모두 삭제할까요?")) return;
+    c.options.forEach(o=>{ if (o.photos) o.photos.forEach(pid=>photoDel(pid)); });
     state.categories = state.categories.filter(x=>x.id!==catId);
     tab = "summary"; persist(); render();
   },
@@ -544,7 +744,10 @@ async function startApp(){
 /* ── 핀번호 게이트 ── */
 function connectRoom(room){
   if (FB_ENABLED && typeof firebase !== "undefined"){
-    try { fbRef = firebase.database().ref("planners/" + room); } catch(e){ console.error(e); }
+    try {
+      fbRef = firebase.database().ref("planners/" + room);
+      fbPhotos = firebase.database().ref("photos/" + room);
+    } catch(e){ console.error(e); }
   }
   document.getElementById("gate").style.display = "none";
   startApp();

@@ -157,6 +157,11 @@
     flex-shrink:0; margin-top:1px; display:flex; align-items:center; justify-content:center;
     font-size:12px; color:#fff; padding:0; }
   .ev-check.on{ background:var(--blue); border-color:var(--blue); }
+  .taglink{ background:none; border:none; padding:0; font:inherit; font-weight:700;
+    color:var(--blue); text-decoration:underline; cursor:pointer; overflow-wrap:anywhere; }
+  .tagrow{ display:flex; gap:6px; overflow-x:auto; padding-bottom:2px; scrollbar-width:none; align-items:center; }
+  .tagrow::-webkit-scrollbar{ display:none; }
+  .tagrow .chip{ flex-shrink:0; }
 
   /* 사진 */
   .thumbs{ display:flex; gap:6px; margin-top:10px; flex-wrap:wrap; }
@@ -601,6 +606,38 @@ function optionHTML(c, o){
   return html;
 }
 
+/* ── 옵션 태그(#) ──
+   일정 제목/메모에 #옵션이름 을 쓰면 링크가 되고, 누르면 해당 옵션 상세가 열립니다. */
+let evTagList = [];
+
+function optionIndex(){
+  const list = [];
+  for (const c of state.categories)
+    for (const o of c.options)
+      if (o.name) list.push({ name: o.name, catId: c.id, optId: o.id });
+  return list.sort((a,b)=>b.name.length - a.name.length); // 긴 이름 우선 매칭
+}
+
+function renderWithTags(text){
+  const idx = optionIndex();
+  let out = "", i = 0;
+  while (i < text.length){
+    if (text[i] === "#"){
+      const rest = text.slice(i+1);
+      let hit = null;
+      for (const it of idx){ if (rest.startsWith(it.name)){ hit = it; break; } }
+      if (hit){
+        out += '<button class="taglink" onclick="event.stopPropagation();App.openDetail(\''+hit.catId+'\',\''+hit.optId+'\')">#'+esc(hit.name)+'</button>';
+        i += 1 + hit.name.length;
+        continue;
+      }
+    }
+    out += esc(text[i]);
+    i++;
+  }
+  return out;
+}
+
 /* ── 일정 ── */
 let schedView = "calendar";   // 'calendar' | 'timeline'
 let calCursor = null;         // {y, m}
@@ -649,14 +686,26 @@ function scheduleHTML(){
 
 function evFormHTML(){
   const ev = evFormState.editingId ? (state.events||[]).find(e=>e.id===evFormState.editingId) : null;
+  evTagList = [];
+  for (const c of state.categories)
+    for (const o of c.options)
+      if (o.status !== "dropped" && o.name) evTagList.push(o.name);
+  let tagRow = '';
+  if (evTagList.length){
+    tagRow = '<div class="tagrow"><span style="font-size:11px;color:var(--faint);flex-shrink:0">태그:</span>';
+    for (let i=0;i<evTagList.length;i++)
+      tagRow += '<button class="chip" onclick="App.evInsertTag('+i+')">#'+esc(evTagList[i])+'</button>';
+    tagRow += '</div>';
+  }
   return '<section class="form">'
     + '<div class="title">'+(ev ? "일정 수정" : "새 일정")+'</div>'
-    + '<input id="ev-title" placeholder="일정 제목 * (예: 본식 드레스 가봉)" value="'+esc(ev?ev.title:'')+'" />'
+    + '<input id="ev-title" placeholder="일정 제목 * (예: #드레스A 가봉)" value="'+esc(ev?ev.title:'')+'" onfocus="App._evTarget=\'title\'" />'
+    + tagRow
     + '<div style="display:flex;gap:8px">'
     + '<input id="ev-date" type="date" value="'+esc(ev ? ev.date : (evFormState.date || selDate))+'" style="flex:1" />'
     + '<input id="ev-time" type="time" value="'+esc(ev&&ev.time?ev.time:'')+'" style="flex:1" />'
     + '</div>'
-    + '<textarea id="ev-memo" rows="2" placeholder="메모 (선택)" style="resize:vertical">'+esc(ev&&ev.memo?ev.memo:'')+'</textarea>'
+    + '<textarea id="ev-memo" rows="2" placeholder="메모 (선택)" style="resize:vertical" onfocus="App._evTarget=\'memo\'">'+esc(ev&&ev.memo?ev.memo:'')+'</textarea>'
     + '<div class="btns">'
     + (ev ? '<button class="btn-ghost" style="margin-right:auto;color:var(--danger)" onclick="App.evRemove(\''+ev.id+'\')">삭제</button>' : '')
     + '<button class="btn-ghost" onclick="App.evCancel()">취소</button>'
@@ -742,10 +791,10 @@ function evRowHTML(e, pastSection){
   }
   return '<div class="ev'+(e.done?' done':'')+'"'+(pastSection?' style="opacity:.6"':'')+'>'
     + '<button class="ev-check'+(e.done?' on':'')+'" onclick="App.evToggle(\''+e.id+'\')">'+(e.done?'✓':'')+'</button>'
-    + '<div class="body" onclick="App.evOpenForm(null,\''+e.id+'\')">'
+    + '<div class="body" onclick="if(!event.target.closest(\'.taglink\'))App.evOpenForm(null,\''+e.id+'\')">'
     + (e.time ? '<div class="t">'+esc(e.time)+'</div>' : '')
-    + '<div class="tt">'+esc(e.title)+'</div>'
-    + (e.memo ? '<div class="mm">'+esc(e.memo)+'</div>' : '')
+    + '<div class="tt">'+renderWithTags(e.title)+'</div>'
+    + (e.memo ? '<div class="mm">'+renderWithTags(e.memo)+'</div>' : '')
     + '</div></div>';
 }
 
@@ -809,6 +858,17 @@ window.App = {
     calCursor = { y, m }; render();
   },
   calSelect(ds){ selDate = ds; render(); },
+  _evTarget: "title",
+  evInsertTag(i){
+    const name = evTagList[i];
+    if (!name) return;
+    const el = document.getElementById(this._evTarget === "memo" ? "ev-memo" : "ev-title");
+    if (!el) return;
+    let v = el.value.replace(/#\s*$/, "");           // 방금 친 # 는 정리
+    if (v && !/\s$/.test(v)) v += " ";
+    el.value = v + "#" + name + " ";
+    el.focus();
+  },
   evOpenForm(date, id){
     evFormState = { editingId: id || null, date: date || selDate || todayStr() };
     render();

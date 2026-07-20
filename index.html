@@ -163,6 +163,19 @@
   .tagrow::-webkit-scrollbar{ display:none; }
   .tagrow .chip{ flex-shrink:0; }
 
+  /* 순서 변경 */
+  #reorder{ position:fixed; inset:0; background:var(--paper); z-index:95; display:none; overflow-y:auto;
+    -webkit-overflow-scrolling:touch; }
+  #reorder .inner{ max-width:720px; margin:0 auto; padding:0 16px 60px; }
+  .ro-row{ display:flex; align-items:center; gap:8px; background:var(--card); border:1px solid var(--line);
+    border-radius:12px; padding:10px 12px; margin-bottom:8px; user-select:none; -webkit-user-select:none; }
+  .ro-row.dragging{ opacity:.9; box-shadow:0 8px 20px rgba(0,0,0,.14); position:relative; z-index:2;
+    border-color:var(--blue); }
+  .ro-handle{ font-size:17px; color:var(--faint); touch-action:none; cursor:grab; padding:6px 10px; margin-left:-6px; }
+  .ro-name{ font-size:14px; font-weight:700; flex:1; overflow-wrap:anywhere; }
+  .ro-btn{ background:#fff; border:1px solid var(--line); border-radius:8px; font-size:14px;
+    color:var(--sub); padding:6px 12px; }
+
   /* 사진 */
   .thumbs{ display:flex; gap:6px; margin-top:10px; flex-wrap:wrap; }
   .thumb{ width:64px; height:64px; object-fit:cover; border-radius:8px; border:1px solid var(--line);
@@ -212,6 +225,7 @@
     <div id="pin-err"></div>
   </div>
 </div>
+<div id="reorder"><div class="inner" id="reorder-inner"></div></div>
 <div id="detail"><div class="inner" id="detail-inner"></div></div>
 <div id="lightbox" onclick="if(event.target.id==='lightbox')App.closePhoto()">
   <img id="lb-img" alt="" />
@@ -423,6 +437,7 @@ function render(){
     main.innerHTML = c ? categoryHTML(c) : summaryHTML();
   }
   renderDetail();
+  renderReorder();
   hydratePhotos();
 }
 
@@ -442,7 +457,8 @@ function renderTabs(){
     const hasD = c.options.some(o=>o.status==="decided");
     const hasP = c.options.some(o=>o.status==="considering"||o.status==="candidate");
     const dot = hasD ? "var(--blue)" : hasP ? "var(--red)" : null;
-    html += '<button class="tab'+(tab===c.id?" active":"")+'" onclick="App.setTab(\''+c.id+'\')">'
+    html += '<button class="tab'+(tab===c.id?" active":"")+'" onclick="App.tabClick(\''+c.id+'\')"'
+          + ' onpointerdown="App.lpStart()" onpointerup="App.lpEnd()" onpointerleave="App.lpEnd()" onpointercancel="App.lpEnd()">'
           + (dot ? '<span class="dot" style="background:'+dot+'"></span>' : '')
           + esc(c.name) + '</button>';
   }
@@ -485,7 +501,7 @@ function summaryHTML(){
     + '<input type="date" value="'+esc(state.weddingDate)+'" onchange="App.setDate(this.value)" style="width:auto;padding:8px 10px" />'
     + '</section>';
 
-  html += '<section class="grid" style="gap:8px"><h2 class="sec">항목별 현황</h2>';
+  html += '<section class="grid" style="gap:8px"><h2 class="sec" style="display:flex;justify-content:space-between;align-items:center">항목별 현황 <button class="txtbtn" style="font-weight:600" onclick="App.reorderOpen()">순서 변경</button></h2>';
   for (const r of c.rows){
     const accent = r.decided.length ? "var(--blue)" : r.pending.length ? "var(--red)" : "var(--line)";
     let desc, right;
@@ -798,6 +814,28 @@ function evRowHTML(e, pastSection){
     + '</div></div>';
 }
 
+/* ── 항목 순서 변경 ── */
+let reorderMode = false;
+
+function renderReorder(){
+  const box = document.getElementById("reorder");
+  if (!reorderMode){ box.style.display = "none"; return; }
+  let html = '<div class="dt-top"><button class="dt-back" onclick="App.reorderDone()">✓ 완료</button>'
+    + '<span class="label" style="font-size:13px">항목 순서 변경</span></div>'
+    + '<div style="font-size:12px;color:var(--faint);margin:0 0 12px">⠿ 를 누른 채 위아래로 끌거나, 화살표를 눌러 옮기세요</div>';
+  const n = state.categories.length;
+  state.categories.forEach((c, i)=>{
+    html += '<div class="ro-row" data-id="'+c.id+'">'
+      + '<span class="ro-handle" onpointerdown="App.roDown(event,\''+c.id+'\')" onpointermove="App.roDrag(event)" onpointerup="App.roUp(event)" onpointercancel="App.roUp(event)">⠿</span>'
+      + '<span class="ro-name">'+esc(c.name)+'</span>'
+      + '<button class="ro-btn"'+(i===0?' disabled style="opacity:.3"':'')+' onclick="App.roMove(\''+c.id+'\',-1)">↑</button>'
+      + '<button class="ro-btn"'+(i===n-1?' disabled style="opacity:.3"':'')+' onclick="App.roMove(\''+c.id+'\',1)">↓</button>'
+      + '</div>';
+  });
+  document.getElementById("reorder-inner").innerHTML = html;
+  box.style.display = "block";
+}
+
 /* ── 옵션 상세 보기 ── */
 let detailState = null;
 
@@ -892,6 +930,50 @@ window.App = {
     calCursor = { y: parseInt(date.slice(0,4),10), m: parseInt(date.slice(5,7),10)-1 };
     evFormState = null; pendingRemote = null; persist(); render();
   },
+  /* 순서 변경 */
+  reorderOpen(){ reorderMode = true; renderReorder(); },
+  reorderDone(){ reorderMode = false; renderReorder(); render(); },
+  roMove(id, dir){
+    const i = state.categories.findIndex(c=>c.id===id);
+    const j = i + dir;
+    if (i < 0 || j < 0 || j >= state.categories.length) return;
+    const [c] = state.categories.splice(i, 1);
+    state.categories.splice(j, 0, c);
+    persist(); renderReorder();
+  },
+  roDown(e, id){
+    e.preventDefault();
+    const row = e.currentTarget.closest(".ro-row");
+    try { e.currentTarget.setPointerCapture(e.pointerId); } catch(err){}
+    this._ro = { id, row, startY: e.clientY, fromIdx: state.categories.findIndex(c=>c.id===id) };
+    row.classList.add("dragging");
+  },
+  roDrag(e){
+    const d = this._ro; if (!d) return;
+    d.row.style.transform = "translateY(" + (e.clientY - d.startY) + "px)";
+  },
+  roUp(e){
+    const d = this._ro; if (!d) return;
+    this._ro = null;
+    const rowH = d.row.offsetHeight + 8;
+    const shift = Math.round((e.clientY - d.startY) / rowH);
+    d.row.classList.remove("dragging");
+    d.row.style.transform = "";
+    const to = Math.max(0, Math.min(state.categories.length - 1, d.fromIdx + shift));
+    if (to !== d.fromIdx){
+      const [c] = state.categories.splice(d.fromIdx, 1);
+      state.categories.splice(to, 0, c);
+      persist();
+    }
+    renderReorder();
+  },
+  /* 탭 길게 누르기 */
+  tabClick(id){ if (this._lp){ this._lp = false; return; } this.setTab(id); },
+  lpStart(){
+    clearTimeout(this._lpT);
+    this._lpT = setTimeout(()=>{ this._lp = true; App.reorderOpen(); }, 500);
+  },
+  lpEnd(){ clearTimeout(this._lpT); },
   async backup(){
     toast("백업 만드는 중…");
     const photos = {};

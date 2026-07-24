@@ -1377,7 +1377,7 @@ var PB = [
   #modeHoneymoon .hm-day{ background:#fff; border:1px solid #e8e1d6; border-radius:16px; padding:15px 16px; margin-bottom:13px; }
   #modeHoneymoon .hm-day-head{ display:flex; align-items:baseline; gap:9px; }
   #modeHoneymoon .hm-badge{ background:#4a7c59; color:#fff; font-size:11px; font-weight:800; padding:3px 9px; border-radius:999px; white-space:nowrap; flex-shrink:0; }
-  #modeHoneymoon .hm-date{ color:#b08d4f; font-weight:700; font-size:12.5px; min-width:34px; }
+  #modeHoneymoon .hm-date{ color:#b08d4f; font-weight:700; font-size:12.5px; white-space:nowrap; }
   #modeHoneymoon .hm-title{ font-weight:800; font-size:16px; flex:1; }
   #modeHoneymoon .hm-items{ list-style:none; padding:0; margin:11px 0 0; }
   #modeHoneymoon .hm-items li{ display:flex; align-items:flex-start; gap:8px; padding:5px 0; font-size:14px; line-height:1.6; color:#463f37; }
@@ -1391,12 +1391,15 @@ var PB = [
   #modeHoneymoon .hm-add:hover{ border-color:#b08d4f; color:#2b2622; }
   #modeHoneymoon .hm-additem{ margin-top:9px; font-size:12.5px; padding:5px 10px; }
   #modeHoneymoon .hm-day-foot{ margin-top:12px; border-top:1px dashed #e8e1d6; padding-top:11px; }
-  #modeHoneymoon .foot-meal{ display:flex; justify-content:flex-end; align-items:baseline; gap:7px; font-size:13px; }
-  #modeHoneymoon .foot-stay{ display:flex; align-items:baseline; gap:7px; font-size:13px; margin-top:8px;
+  #modeHoneymoon .foot-meals{ display:grid; gap:5px; margin-bottom:9px; }
+  #modeHoneymoon .mrow{ display:flex; gap:10px; align-items:baseline; font-size:13px; }
+  #modeHoneymoon .mlbl{ color:#b08d4f; font-weight:700; font-size:11.5px; width:28px; flex-shrink:0; }
+  #modeHoneymoon .mval{ flex:1; color:#463f37; }
+  #modeHoneymoon .mval[contenteditable]:empty::before{ content:'—'; color:#d0c8b8; }
+  #modeHoneymoon .foot-stay{ display:flex; align-items:baseline; gap:7px; font-size:13px;
     background:#f6efe2; border-radius:9px; padding:9px 12px; }
-  #modeHoneymoon .foot-meal .lbl, #modeHoneymoon .foot-stay .lbl{ color:#8a8177; font-weight:700; white-space:nowrap; font-size:12px; }
+  #modeHoneymoon .foot-stay .lbl{ color:#8a8177; font-weight:700; white-space:nowrap; font-size:12px; }
   #modeHoneymoon .foot-stay .foot-val{ flex:1; font-weight:600; color:#5c5140; }
-  #modeHoneymoon .foot-meal .foot-val{ font-weight:600; color:#463f37; text-align:right; }
   #modeHoneymoon .foot-val[contenteditable]:empty::before{ content:attr(data-ph); color:#c3bcae; font-weight:400; }
 
   /* 비용 */
@@ -1483,20 +1486,23 @@ var PB = [
   var LS={ get:function(k,d){ try{var v=localStorage.getItem(k);return v?JSON.parse(v):d;}catch(e){return d;} },
            set:function(k,v){ try{localStorage.setItem(k,JSON.stringify(v));}catch(e){} } };
   var esc=function(s){return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');};
+  function normSched(arr){ if(!Array.isArray(arr))return arr; arr.forEach(function(d){
+    if(!d.meals||typeof d.meals!=='object'){ d.meals={b:'',l:'',d:(d.meal||'')}; }
+    if(d.meals.b==null)d.meals.b=''; if(d.meals.l==null)d.meals.l=''; if(d.meals.d==null)d.meals.d=''; }); return arr; }
 
   var SEED_SCHED=[
-    {d:'D1',date:'11/15',t:'인천 → 파리 (일)',stay:'CDG 공항 인근 호텔',meal:'',items:['아시아나 인천→파리(CDG) 직항, 저녁 도착']},
-    {d:'D2',date:'11/16',t:'TGV로 니스 (월)',stay:'니스 (1박)',meal:'르 트랑 블루 (점심)',items:['리옹역에서 TGV 탑승','TGV 파리→니스 (약 5시간 40분, 해안 구간)','니스 구시가·프롬나드 산책']},
-    {d:'D3',date:'11/17',t:'에즈 + 모나코 (화)',stay:'니스 (2박)',meal:'',items:['오전: 에즈 중세마을·이국정원','오후: 모나코 몬테카를로']},
-    {d:'D4',date:'11/18',t:'망통 / 생폴드방스 (수)',stay:'니스 (3박)',meal:'',items:['A안: 망통','B안: 생폴드방스 + 앙티브 피카소 미술관']},
-    {d:'D5',date:'11/19',t:'니스 → 베네치아 → 코르티나 (목)',stay:'코르티나 담페초 (1박)',meal:'',items:['easyJet 니스→베네치아','베네치아 공항 렌터카 픽업 (윈터타이어 확인!)','코르티나 담페초 이동']},
-    {d:'D6',date:'11/20',t:'돌로미티 호수 투어 (금)',stay:'코르티나 담페초 (2박)',meal:'',items:['미주리나 → 도비아코 → 브라이에스 호수','팔자레고 고개 드라이브 (도로 상황 확인)']},
-    {d:'D7',date:'11/21',t:'발 가르데나 (토)',stay:'오르티세이 (1박)',meal:'',items:['푸네스 계곡 성 요한 성당','셀라·가르데나 고개 (개통 시)']},
-    {d:'D8',date:'11/22',t:'푸네스 + ADLER 체크인 (일)',stay:'ADLER Lodge ALPE (검토중)',meal:'ADLER 디너 (올인클루시브)',items:['오전: 푸네스 계곡','오후: ADLER Lodge ALPE 체크인']},
-    {d:'D9~10',date:'11/23~24',t:'돌로미티 휴양',stay:'ADLER Lodge ALPE',meal:'ADLER 디너 (올인클루시브)',items:['설원 산책·스파, 벽난로','옵션: 셀라 고개 드라이브']},
-    {d:'D11',date:'11/25',t:'볼차노 → 베네치아 → 파리 (수)',stay:'파리 (1박)',meal:'',items:['볼차노 구시가·레논 케이블카','베네치아 렌터카 반납 → 파리행 항공']},
-    {d:'D12',date:'11/26',t:'로맨틱 파리 (목)',stay:'파리 (2박)',meal:'Don Juan II 디너 크루즈 (저녁)',items:['생루이 섬·파사주·마레 산책']},
-    {d:'D13',date:'11/27',t:'귀국 (금)',stay:'',meal:'',items:['아시아나 파리→인천 (11/28 도착)']}
+    {d:'D1',date:'11/15(일)',t:'인천 → 파리',stay:'CDG 공항 인근 호텔',meals:{b:'',l:'',d:'기내식'},items:['아시아나 인천→파리(CDG) 직항, 저녁 도착']},
+    {d:'D2',date:'11/16(월)',t:'TGV로 니스',stay:'니스 (1박)',meals:{b:'',l:'르 트랑 블루',d:''},items:['리옹역에서 TGV 탑승','TGV 파리→니스 (약 5시간 40분, 해안 구간)','니스 구시가·프롬나드 산책']},
+    {d:'D3',date:'11/17(화)',t:'에즈 + 모나코',stay:'니스 (2박)',meals:{b:'',l:'',d:''},items:['오전: 에즈 중세마을·이국정원','오후: 모나코 몬테카를로']},
+    {d:'D4',date:'11/18(수)',t:'망통 / 생폴드방스',stay:'니스 (3박)',meals:{b:'',l:'',d:''},items:['A안: 망통','B안: 생폴드방스 + 앙티브 피카소 미술관']},
+    {d:'D5',date:'11/19(목)',t:'니스 → 베네치아 → 코르티나',stay:'코르티나 담페초 (1박)',meals:{b:'',l:'',d:''},items:['easyJet 니스→베네치아','베네치아 공항 렌터카 픽업 (윈터타이어 확인!)','코르티나 담페초 이동']},
+    {d:'D6',date:'11/20(금)',t:'돌로미티 호수 투어',stay:'코르티나 담페초 (2박)',meals:{b:'',l:'',d:''},items:['미주리나 → 도비아코 → 브라이에스 호수','팔자레고 고개 드라이브 (도로 상황 확인)']},
+    {d:'D7',date:'11/21(토)',t:'발 가르데나',stay:'오르티세이 (1박)',meals:{b:'',l:'',d:''},items:['푸네스 계곡 성 요한 성당','셀라·가르데나 고개 (개통 시)']},
+    {d:'D8',date:'11/22(일)',t:'푸네스 + ADLER 체크인',stay:'ADLER Lodge ALPE (검토중)',meals:{b:'',l:'',d:'ADLER 디너 (올인클루시브)'},items:['오전: 푸네스 계곡','오후: ADLER Lodge ALPE 체크인']},
+    {d:'D9~10',date:'11/23~24(월·화)',t:'돌로미티 휴양',stay:'ADLER Lodge ALPE',meals:{b:'ADLER 조식',l:'',d:'ADLER 디너'},items:['설원 산책·스파, 벽난로','옵션: 셀라 고개 드라이브']},
+    {d:'D11',date:'11/25(수)',t:'볼차노 → 베네치아 → 파리',stay:'파리 (1박)',meals:{b:'ADLER 조식',l:'',d:''},items:['볼차노 구시가·레논 케이블카','베네치아 렌터카 반납 → 파리행 항공']},
+    {d:'D12',date:'11/26(목)',t:'로맨틱 파리',stay:'파리 (2박)',meals:{b:'',l:'',d:'Don Juan II 디너 크루즈'},items:['생루이 섬·파사주·마레 산책']},
+    {d:'D13',date:'11/27(금)',t:'귀국',stay:'',meals:{b:'',l:'',d:'기내식'},items:['아시아나 파리→인천 (11/28 도착)']}
   ];
   var SEED_COST=[ {id:1, cat:'교통', cur:'EUR', amt:90, memo:'(예시) TGV 파리→니스 1등석 2인'} ];
   var CATS=['항공','숙박','식비','교통','액티비티','쇼핑','기타'];
@@ -1512,7 +1518,7 @@ var PB = [
   function syncMsg(t,c){ var b=document.getElementById('hm-sync'); if(b){ b.textContent=t; b.style.color=c||'#a89e8d'; } }
 
   var HM={ data:{}, fx:null, filt:'all', cur:'sched', _ls:null, _lc:null, _pend:false,
-    load:function(){ this.data.sched=LS.get('hm2026-sched',null)||JSON.parse(JSON.stringify(SEED_SCHED));
+    load:function(){ this.data.sched=normSched(LS.get('hm2026-sched',null)||JSON.parse(JSON.stringify(SEED_SCHED)));
       this.data.cost=LS.get('hm2026-cost',null)||JSON.parse(JSON.stringify(SEED_COST));
       this.fx=LS.get('hm2026-fx',null)||FX_FALLBACK; },
     save:function(){ LS.set('hm2026-sched',this.data.sched); LS.set('hm2026-cost',this.data.cost);
@@ -1529,7 +1535,7 @@ var PB = [
       var onErr=function(){ syncMsg('⚠ 동기화 권한 없음 — Firebase 규칙 확인 필요','#b5424e'); };
       fbSched.on('value',function(snap){ var v=snap.val();
         if(v==null){ self._ls=JSON.stringify(self.data.sched); fbSched.set(self._ls).catch(onErr); return; }
-        if(v===self._ls)return; try{ var p=JSON.parse(v); if(Array.isArray(p)){ self.data.sched=p; LS.set('hm2026-sched',p); self.applyRemote(); } }catch(e){} }, onErr);
+        if(v===self._ls)return; try{ var p=JSON.parse(v); if(Array.isArray(p)){ self.data.sched=normSched(p); LS.set('hm2026-sched',self.data.sched); self.applyRemote(); } }catch(e){} }, onErr);
       fbCost.on('value',function(snap){ var v=snap.val();
         if(v==null){ self._lc=JSON.stringify(self.data.cost); fbCost.set(self._lc).catch(onErr); return; }
         if(v===self._lc)return; try{ var p=JSON.parse(v); if(Array.isArray(p)){ self.data.cost=p; LS.set('hm2026-cost',p); self.applyRemote(); } }catch(e){} }, onErr);
@@ -1554,14 +1560,20 @@ var PB = [
           h+='<li><span contenteditable style="flex:1" onblur="HM.editItem('+di+','+ii+',this)">'+esc(it)+'</span>'+
              '<button class="hm-x" onclick="HM.delItem('+di+','+ii+')">✕</button></li>'; });
         h+='</ul><button class="hm-add hm-additem" onclick="HM.addItem('+di+')">＋ 일정 추가</button>';
-        h+='<div class="hm-day-foot">'+
-           '<div class="foot-meal"><span class="lbl">🍽 식당</span> <span class="foot-val" contenteditable data-ph="식당 미정" onblur="HM.editDay('+di+',\'meal\',this)">'+esc(day.meal||'')+'</span></div>'+
+        var m=day.meals||{b:'',l:'',d:''};
+        h+='<div class="hm-day-foot"><div class="foot-meals">'+
+           '<div class="mrow"><span class="mlbl">조식</span><span class="mval" contenteditable data-ph="—" onblur="HM.editMeal('+di+',\'b\',this)">'+esc(m.b||'')+'</span></div>'+
+           '<div class="mrow"><span class="mlbl">중식</span><span class="mval" contenteditable data-ph="—" onblur="HM.editMeal('+di+',\'l\',this)">'+esc(m.l||'')+'</span></div>'+
+           '<div class="mrow"><span class="mlbl">석식</span><span class="mval" contenteditable data-ph="—" onblur="HM.editMeal('+di+',\'d\',this)">'+esc(m.d||'')+'</span></div>'+
+           '</div>'+
            '<div class="foot-stay"><span class="lbl">🏨 숙소</span> <span class="foot-val" contenteditable data-ph="숙소 미정" onblur="HM.editDay('+di+',\'stay\',this)">'+esc(day.stay||'')+'</span></div>'+
            '</div>';
         h+='</div>'; });
       h+='<button class="hm-add" style="width:100%;padding:12px" onclick="HM.addDay()">＋ 날짜 추가</button>';
       el.innerHTML=h; },
     editDay:function(i,k,e){ this.data.sched[i][k]=e.textContent.trim(); this.save(); },
+    editMeal:function(i,which,e){ if(!this.data.sched[i].meals)this.data.sched[i].meals={b:'',l:'',d:''};
+      this.data.sched[i].meals[which]=e.textContent.trim(); this.save(); },
     editItem:function(di,ii,e){ this.data.sched[di].items[ii]=e.textContent.trim(); this.save(); },
     addItem:function(di){ this.data.sched[di].items.push('새 일정'); this.save(); this.renderSched(); },
     delItem:function(di,ii){ this.data.sched[di].items.splice(ii,1); this.save(); this.renderSched(); },

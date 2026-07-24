@@ -202,13 +202,19 @@
     padding:10px 18px; border-radius:999px; font-size:13px; z-index:50; display:none; }
 </style>
 
+  <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+  <meta http-equiv="Pragma" content="no-cache">
+  <meta http-equiv="Expires" content="0">
+
 <style id="mode-switch-css">
   #modeSwitch{ position:fixed; left:50%; bottom:18px; transform:translateX(-50%); z-index:70;
-    display:flex; gap:4px; background:rgba(255,255,255,.94); backdrop-filter:blur(8px);
+    display:flex; gap:4px; align-items:center; background:rgba(255,255,255,.94); backdrop-filter:blur(8px);
     border:1px solid #E8E4DC; border-radius:999px; padding:5px; box-shadow:0 8px 28px rgba(40,30,20,.18); }
   #modeSwitch button{ border:0; background:transparent; font-family:inherit; font-size:13px; font-weight:700;
-    color:#75716A; padding:8px 18px; border-radius:999px; cursor:pointer; transition:.18s; white-space:nowrap; }
+    color:#75716A; padding:8px 16px; border-radius:999px; cursor:pointer; transition:.18s; white-space:nowrap; }
   #modeSwitch button.on{ background:#26262E; color:#fff; }
+  #modeSwitch .rl{ padding:8px 12px; font-size:15px; color:#8a8177; border-left:1px solid #E8E4DC; border-radius:0; }
+  #modeSwitch .rl:hover{ color:#26262E; }
   body.hm-active{ overflow:auto; }
 </style>
 </head>
@@ -1616,6 +1622,7 @@ var PB = [
 <div id="modeSwitch">
   <button id="mm-wed" class="on" onclick="__setMode('wed')">💍 결혼준비</button>
   <button id="mm-hm" onclick="__setMode('hm')">✈️ 신혼여행</button>
+  <button class="rl" title="최신버전으로 새로고침" onclick="__hardReload()">↻</button>
 </div>
 
 
@@ -1624,12 +1631,12 @@ var PB = [
   function setMode(m){
     var w=document.getElementById('modeWedding'), h=document.getElementById('modeHoneymoon');
     var bw=document.getElementById('mm-wed'), bh=document.getElementById('mm-hm');
-    if(m==='hm'){ w.style.display='none'; h.classList.add('on'); bh.classList.add('on'); bw.classList.remove('on');
-      window.scrollTo(0,0); }
-    else { h.classList.remove('on'); w.style.display='block'; bw.classList.add('on'); bh.classList.remove('on');
-      document.body.style.overflow=''; window.scrollTo(0,0); }
+    if(m==='hm'){ w.style.display='none'; h.classList.add('on'); bh.classList.add('on'); bw.classList.remove('on'); window.scrollTo(0,0); }
+    else { h.classList.remove('on'); w.style.display='block'; bw.classList.add('on'); bh.classList.remove('on'); document.body.style.overflow=''; window.scrollTo(0,0); }
   }
   window.__setMode=setMode;
+  window.__hardReload=function(){ location.replace(location.pathname + '?v=' + Date.now()); };
+  window.__BUILD='2026.07.24.1259';
 })();
 </script>
 

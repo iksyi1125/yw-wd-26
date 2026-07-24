@@ -1390,6 +1390,14 @@ var PB = [
     padding:8px 14px; border-radius:10px; cursor:pointer; font-family:inherit; }
   #modeHoneymoon .hm-add:hover{ border-color:#b08d4f; color:#2b2622; }
   #modeHoneymoon .hm-additem{ margin-top:9px; font-size:12.5px; padding:5px 10px; }
+  #modeHoneymoon .hm-day-foot{ margin-top:12px; border-top:1px dashed #e8e1d6; padding-top:11px; }
+  #modeHoneymoon .foot-meal{ display:flex; justify-content:flex-end; align-items:baseline; gap:7px; font-size:13px; }
+  #modeHoneymoon .foot-stay{ display:flex; align-items:baseline; gap:7px; font-size:13px; margin-top:8px;
+    background:#f6efe2; border-radius:9px; padding:9px 12px; }
+  #modeHoneymoon .foot-meal .lbl, #modeHoneymoon .foot-stay .lbl{ color:#8a8177; font-weight:700; white-space:nowrap; font-size:12px; }
+  #modeHoneymoon .foot-stay .foot-val{ flex:1; font-weight:600; color:#5c5140; }
+  #modeHoneymoon .foot-meal .foot-val{ font-weight:600; color:#463f37; text-align:right; }
+  #modeHoneymoon .foot-val[contenteditable]:empty::before{ content:attr(data-ph); color:#c3bcae; font-weight:400; }
 
   /* 비용 */
   #modeHoneymoon .hm-fxbar{ background:#f3ede0; border-radius:12px; padding:12px 15px; font-size:12.5px; color:#6f675e; margin-bottom:16px; display:flex; justify-content:space-between; align-items:center; gap:10px; flex-wrap:wrap; }
@@ -1477,18 +1485,18 @@ var PB = [
   var esc=function(s){return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');};
 
   var SEED_SCHED=[
-    {d:'D1',date:'11/15',t:'인천 → 파리 (일)',items:['아시아나 인천→파리(CDG) 직항, 저녁 도착','CDG 공항 인근 1박 (장거리 비행 직후 휴식)']},
-    {d:'D2',date:'11/16',t:'TGV로 니스 (월)',items:['리옹역 르 트랑 블루에서 이른 점심','TGV 파리→니스 (약 5시간 40분, 해안 구간)','니스 구시가·프롬나드 산책 — 니스 1박']},
-    {d:'D3',date:'11/17',t:'에즈 + 모나코 (화)',items:['오전: 에즈 중세마을·이국정원','오후: 모나코 몬테카를로 — 니스 2박']},
-    {d:'D4',date:'11/18',t:'망통 / 생폴드방스 (수)',items:['A안: 망통','B안: 생폴드방스 + 앙티브 피카소 미술관','니스 3박']},
-    {d:'D5',date:'11/19',t:'니스 → 베네치아 → 코르티나 (목)',items:['easyJet 니스→베네치아','베네치아 공항 렌터카 픽업 (윈터타이어 확인!)','코르티나 담페초 이동 — 1박']},
-    {d:'D6',date:'11/20',t:'돌로미티 호수 투어 (금)',items:['미주리나 → 도비아코 → 브라이에스 호수','팔자레고 고개 드라이브 (도로 상황 확인)','코르티나 2박']},
-    {d:'D7',date:'11/21',t:'발 가르데나 (토)',items:['푸네스 계곡 성 요한 성당','셀라·가르데나 고개 (개통 시)','오르티세이 1박']},
-    {d:'D8',date:'11/22',t:'푸네스 + ADLER 체크인 (일)',items:['오전: 푸네스 계곡','오후: ADLER Lodge ALPE 체크인 (검토중)']},
-    {d:'D9~10',date:'11/23~24',t:'돌로미티 휴양',items:['설원 산책·스파, 벽난로','옵션: 셀라 고개 드라이브']},
-    {d:'D11',date:'11/25',t:'볼차노 → 베네치아 → 파리 (수)',items:['볼차노 구시가·레논 케이블카','베네치아 렌터카 반납 → 파리행 항공','파리 1박']},
-    {d:'D12',date:'11/26',t:'로맨틱 파리 (목)',items:['생루이 섬·파사주·마레 산책','저녁: Don Juan II 디너 크루즈 🥂']},
-    {d:'D13',date:'11/27',t:'귀국 (금)',items:['아시아나 파리→인천 (11/28 도착)']}
+    {d:'D1',date:'11/15',t:'인천 → 파리 (일)',stay:'CDG 공항 인근 호텔',meal:'',items:['아시아나 인천→파리(CDG) 직항, 저녁 도착']},
+    {d:'D2',date:'11/16',t:'TGV로 니스 (월)',stay:'니스 (1박)',meal:'르 트랑 블루 (점심)',items:['리옹역에서 TGV 탑승','TGV 파리→니스 (약 5시간 40분, 해안 구간)','니스 구시가·프롬나드 산책']},
+    {d:'D3',date:'11/17',t:'에즈 + 모나코 (화)',stay:'니스 (2박)',meal:'',items:['오전: 에즈 중세마을·이국정원','오후: 모나코 몬테카를로']},
+    {d:'D4',date:'11/18',t:'망통 / 생폴드방스 (수)',stay:'니스 (3박)',meal:'',items:['A안: 망통','B안: 생폴드방스 + 앙티브 피카소 미술관']},
+    {d:'D5',date:'11/19',t:'니스 → 베네치아 → 코르티나 (목)',stay:'코르티나 담페초 (1박)',meal:'',items:['easyJet 니스→베네치아','베네치아 공항 렌터카 픽업 (윈터타이어 확인!)','코르티나 담페초 이동']},
+    {d:'D6',date:'11/20',t:'돌로미티 호수 투어 (금)',stay:'코르티나 담페초 (2박)',meal:'',items:['미주리나 → 도비아코 → 브라이에스 호수','팔자레고 고개 드라이브 (도로 상황 확인)']},
+    {d:'D7',date:'11/21',t:'발 가르데나 (토)',stay:'오르티세이 (1박)',meal:'',items:['푸네스 계곡 성 요한 성당','셀라·가르데나 고개 (개통 시)']},
+    {d:'D8',date:'11/22',t:'푸네스 + ADLER 체크인 (일)',stay:'ADLER Lodge ALPE (검토중)',meal:'ADLER 디너 (올인클루시브)',items:['오전: 푸네스 계곡','오후: ADLER Lodge ALPE 체크인']},
+    {d:'D9~10',date:'11/23~24',t:'돌로미티 휴양',stay:'ADLER Lodge ALPE',meal:'ADLER 디너 (올인클루시브)',items:['설원 산책·스파, 벽난로','옵션: 셀라 고개 드라이브']},
+    {d:'D11',date:'11/25',t:'볼차노 → 베네치아 → 파리 (수)',stay:'파리 (1박)',meal:'',items:['볼차노 구시가·레논 케이블카','베네치아 렌터카 반납 → 파리행 항공']},
+    {d:'D12',date:'11/26',t:'로맨틱 파리 (목)',stay:'파리 (2박)',meal:'Don Juan II 디너 크루즈 (저녁)',items:['생루이 섬·파사주·마레 산책']},
+    {d:'D13',date:'11/27',t:'귀국 (금)',stay:'',meal:'',items:['아시아나 파리→인천 (11/28 도착)']}
   ];
   var SEED_COST=[ {id:1, cat:'교통', cur:'EUR', amt:90, memo:'(예시) TGV 파리→니스 1등석 2인'} ];
   var CATS=['항공','숙박','식비','교통','액티비티','쇼핑','기타'];
@@ -1545,7 +1553,12 @@ var PB = [
         day.items.forEach(function(it,ii){
           h+='<li><span contenteditable style="flex:1" onblur="HM.editItem('+di+','+ii+',this)">'+esc(it)+'</span>'+
              '<button class="hm-x" onclick="HM.delItem('+di+','+ii+')">✕</button></li>'; });
-        h+='</ul><button class="hm-add hm-additem" onclick="HM.addItem('+di+')">＋ 일정 추가</button></div>'; });
+        h+='</ul><button class="hm-add hm-additem" onclick="HM.addItem('+di+')">＋ 일정 추가</button>';
+        h+='<div class="hm-day-foot">'+
+           '<div class="foot-meal"><span class="lbl">🍽 식당</span> <span class="foot-val" contenteditable data-ph="식당 미정" onblur="HM.editDay('+di+',\'meal\',this)">'+esc(day.meal||'')+'</span></div>'+
+           '<div class="foot-stay"><span class="lbl">🏨 숙소</span> <span class="foot-val" contenteditable data-ph="숙소 미정" onblur="HM.editDay('+di+',\'stay\',this)">'+esc(day.stay||'')+'</span></div>'+
+           '</div>';
+        h+='</div>'; });
       h+='<button class="hm-add" style="width:100%;padding:12px" onclick="HM.addDay()">＋ 날짜 추가</button>';
       el.innerHTML=h; },
     editDay:function(i,k,e){ this.data.sched[i][k]=e.textContent.trim(); this.save(); },

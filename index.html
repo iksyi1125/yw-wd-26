@@ -1574,7 +1574,13 @@ if(typeof PB!=="undefined"){ PB = PB.concat([{"r": "nice", "cat": "관광지", "
       this.data.cost=LS.get('hm2026-cost',null)||JSON.parse(JSON.stringify(SEED_COST));
       this.data.cost.forEach(function(r,i){ if(r.id==null)r.id=Date.now()+i; });
       this.data.book=normBook(LS.get('hm2026-book',null)||(typeof PB!=='undefined'?JSON.parse(JSON.stringify(PB)):[]));
+      var _m=this.mergeSeed(this.data.book); this.data.book=_m.book; if(_m.added)LS.set('hm2026-book',this.data.book);
       this.fx=LS.get('hm2026-fx',null)||FX_FALLBACK; },
+    mergeSeed:function(book){ if(typeof PB==='undefined')return {book:book,added:false};
+      var have={}; book.forEach(function(p){ have[(p.t||'').trim()]=1; });
+      var added=false;
+      PB.forEach(function(p){ if(!have[(p.t||'').trim()]){ book.push(JSON.parse(JSON.stringify(p))); added=true; } });
+      return {book:normBook(book), added:added}; },
     save:function(){ LS.set('hm2026-sched',this.data.sched); LS.set('hm2026-cost',this.data.cost); LS.set('hm2026-book',this.data.book);
       var warn=function(){ syncMsg('⚠ 동기화 권한 없음 — Firebase 규칙 확인 필요','#b5424e'); };
       if(FB){ try{
@@ -1597,7 +1603,7 @@ if(typeof PB!=="undefined"){ PB = PB.concat([{"r": "nice", "cat": "관광지", "
         if(v===self._lc)return; try{ var p=JSON.parse(v); if(Array.isArray(p)){ self.data.cost=p; LS.set('hm2026-cost',p); self.applyRemote(); } }catch(e){} }, onErr);
       fbBook.on('value',function(snap){ var v=snap.val();
         if(v==null){ self._lb=JSON.stringify(self.data.book); fbBook.set(self._lb).catch(onErr); return; }
-        if(v===self._lb)return; try{ var p=JSON.parse(v); if(Array.isArray(p)){ self.data.book=normBook(p); LS.set('hm2026-book',self.data.book); self.applyRemote(); } }catch(e){} }, onErr);
+        if(v===self._lb)return; try{ var p=JSON.parse(v); if(Array.isArray(p)){ var m=self.mergeSeed(normBook(p)); self.data.book=m.book; LS.set('hm2026-book',self.data.book); if(m.added){ self._lb=JSON.stringify(self.data.book); fbBook.set(self._lb).catch(onErr); } self.applyRemote(); } }catch(e){} }, onErr);
       document.getElementById('modeHoneymoon').addEventListener('focusout',function(){
         setTimeout(function(){ if(self._pend && !self.isEditing()){ self._pend=false; self.applyRemote(); } },160); });
       syncMsg('● 실시간 동기화 켜짐 (양쪽 기기 공유)','#4a7c59'); },

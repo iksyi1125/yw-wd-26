@@ -1517,7 +1517,13 @@ var PB = [
   var esc=function(s){return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');};
   function normSched(arr){ if(!Array.isArray(arr))return arr; arr.forEach(function(d){
     if(!d.meals||typeof d.meals!=='object'){ d.meals={b:'',l:'',d:(d.meal||'')}; }
-    if(d.meals.b==null)d.meals.b=''; if(d.meals.l==null)d.meals.l=''; if(d.meals.d==null)d.meals.d=''; }); return arr; }
+    if(d.meals.b==null)d.meals.b=''; if(d.meals.l==null)d.meals.l=''; if(d.meals.d==null)d.meals.d='';
+    /* 옛 형식: 제목 끝의 (요일)을 날짜로 이동 */
+    if(d.date && d.date.indexOf('(')===-1){
+      var mm=(d.t||'').match(/\(([일월화수목금토][일월화수목금토·]*)\)\s*$/);
+      if(mm){ d.date=d.date+'('+mm[1]+')'; d.t=(d.t||'').replace(/\s*\([일월화수목금토·]+\)\s*$/,'').trim(); }
+    }
+  }); return arr; }
 
   var SEED_SCHED=[
     {d:'D1',date:'11/15(일)',t:'인천 → 파리',stay:'CDG 공항 인근 호텔',meals:{b:'',l:'',d:'기내식'},items:['아시아나 인천→파리(CDG) 직항, 저녁 도착']},
@@ -1670,7 +1676,8 @@ var PB = [
     /* ── 책자 ── */
     renderBook:function(){ var self=this; var el=document.getElementById('ht-book');
       var tagcls={paris:'hm-t-paris',nice:'hm-t-nice',dolo:'hm-t-dolo',venice:'hm-t-venice'};
-      var fh='<div class="hm-filters">';
+      var fh='<button class="hm-add" style="width:100%;padding:12px;margin-bottom:14px" onclick="HM.addBook()">＋ 장소 추가</button>';
+      fh+='<div class="hm-filters">';
       [['all','전체']].concat(REGIONS).forEach(function(f){
         fh+='<button class="hm-chip'+(self.filt===f[0]?' on':'')+'" onclick="HM.setFilt(\''+f[0]+'\')">'+f[1]+'</button>'; });
       fh+='</div><div class="hm-masonry">';
@@ -1680,7 +1687,7 @@ var PB = [
             (p.img?'<img loading="lazy" src="'+p.img+'" alt="'+esc(p.t)+'">':'')+
             '<div class="cb"><span class="hm-tag '+(tagcls[p.r]||'')+'">'+esc(regionLabel(p.r))+'</span><div class="cm">'+esc(p.day||'')+'</div>'+
             '<h3>'+esc(p.t||'')+'</h3><p>'+esc(lead)+'</p></div></div>'; });
-      fh+='</div><button class="hm-add" style="width:100%;padding:13px;margin-top:6px" onclick="HM.addBook()">＋ 장소 추가</button>';
+      fh+='</div>';
       el.innerHTML=fh; },
     setFilt:function(f){ this.filt=f; this.renderBook(); },
     openCard:function(i){ var p=this.data.book[i]; if(!p)return;

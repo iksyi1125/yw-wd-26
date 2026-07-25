@@ -1542,17 +1542,19 @@ var PB_INFO={"니스 구시가 & 프롬나드 데 장글레": {"web": "https://w
     }
   }); return arr; }
 
+  var SCHED_VER=2;
   var SEED_SCHED=[
-    {d:'D1',date:'11/15(일)',t:'인천 → 파리',stay:'CDG 공항 인근 호텔',meals:{b:'',l:'',d:'기내식'},items:['아시아나 인천→파리(CDG) 직항, 저녁 도착']},
-    {d:'D2',date:'11/16(월)',t:'TGV로 니스',stay:'니스 (1박)',meals:{b:'',l:'르 트랑 블루',d:''},items:['리옹역에서 TGV 탑승','TGV 파리→니스 (약 5시간 40분, 해안 구간)','니스 구시가·프롬나드 산책']},
-    {d:'D3',date:'11/17(화)',t:'에즈 + 모나코',stay:'니스 (2박)',meals:{b:'',l:'',d:''},items:['오전: 에즈 중세마을·이국정원','오후: 모나코 몬테카를로']},
-    {d:'D4',date:'11/18(수)',t:'망통 / 생폴드방스',stay:'니스 (3박)',meals:{b:'',l:'',d:''},items:['A안: 망통','B안: 생폴드방스 + 앙티브 피카소 미술관']},
-    {d:'D5',date:'11/19(목)',t:'니스 → 베네치아 → 코르티나',stay:'코르티나 담페초 (1박)',meals:{b:'',l:'',d:''},items:['easyJet 니스→베네치아','베네치아 공항 렌터카 픽업 (윈터타이어 확인!)','코르티나 담페초 이동']},
-    {d:'D6',date:'11/20(금)',t:'돌로미티 호수 투어',stay:'코르티나 담페초 (2박)',meals:{b:'',l:'',d:''},items:['미주리나 → 도비아코 → 브라이에스 호수','팔자레고 고개 드라이브 (도로 상황 확인)']},
-    {d:'D7',date:'11/21(토)',t:'발 가르데나',stay:'오르티세이 (1박)',meals:{b:'',l:'',d:''},items:['푸네스 계곡 성 요한 성당','셀라·가르데나 고개 (개통 시)']},
-    {d:'D8',date:'11/22(일)',t:'푸네스 + ADLER 체크인',stay:'ADLER Lodge ALPE (검토중)',meals:{b:'',l:'',d:'ADLER 디너 (올인클루시브)'},items:['오전: 푸네스 계곡','오후: ADLER Lodge ALPE 체크인']},
-    {d:'D9~10',date:'11/23~24(월·화)',t:'돌로미티 휴양',stay:'ADLER Lodge ALPE',meals:{b:'ADLER 조식',l:'',d:'ADLER 디너'},items:['설원 산책·스파, 벽난로','옵션: 셀라 고개 드라이브']},
-    {d:'D11',date:'11/25(수)',t:'볼차노 → 베네치아 → 파리',stay:'파리 (1박)',meals:{b:'ADLER 조식',l:'',d:''},items:['볼차노 구시가·레논 케이블카','베네치아 렌터카 반납 → 파리행 항공']},
+    {d:'D1',date:'11/15(일)',t:'인천 → 파리',stay:'파리 (CDG 인근, 1박)',meals:{b:'',l:'',d:'기내식'},items:['아시아나 인천→파리(CDG) 직항, 저녁 도착']},
+    {d:'D2',date:'11/16(월)',t:'파리 → 돌로미티',stay:'코르티나 담페초 (1박)',meals:{b:'',l:'',d:''},items:['오전 CDG→베네치아(VCE) 항공','베네치아 공항 렌터카 픽업 (윈터타이어 확인!)','코르티나 담페초 이동 (약 2시간)']},
+    {d:'D3',date:'11/17(화)',t:'코르티나 호수 투어',stay:'코르티나 담페초 (2박)',meals:{b:'',l:'',d:''},items:['미주리나 → 도비아코 → 브라이에스 호수','팔자레고 고개 드라이브 (도로 상황 확인)','코르티나 마을 산책']},
+    {d:'D4',date:'11/18(수)',t:'코르티나 → 발 가르데나',stay:'오르티세이 (1박)',meals:{b:'',l:'',d:''},items:['가르데나·셀라 고개 경유 (개통 시)','알타 바디아 경유','오르티세이 도착']},
+    {d:'D5',date:'11/19(목)',t:'발 가르데나 & 푸네스',stay:'오르티세이 (2박)',meals:{b:'',l:'',d:''},items:['푸네스 계곡 성 요한 성당','알페 디 시우시 고원 드라이브','오르티세이 마을·목공예 상점']},
+    {d:'D6',date:'11/20(금)',t:'볼차노 · 브레사노네',stay:'브레사노네 인근 (1박)',meals:{b:'',l:'',d:''},items:['볼차노 외치 박물관·레논 케이블카','까르짜 호수','포레스티스 등 스파 호텔 휴식']},
+    {d:'D7',date:'11/21(토)',t:'돌로미티 → 남프랑스',stay:'니스 (1박)',meals:{b:'',l:'',d:''},items:['베네치아 공항으로 이동·렌터카 반납','베네치아→니스 항공','니스 도착']},
+    {d:'D8',date:'11/22(일)',t:'니스 구시가',stay:'니스 (2박)',meals:{b:'',l:'',d:''},items:['니스 구시가·프롬나드 데 장글레','쿠르 살레야 (일요일 골동품 시장)']},
+    {d:'D9',date:'11/23(월)',t:'에즈 + 모나코',stay:'니스 (3박)',meals:{b:'',l:'',d:''},items:['오전: 에즈 중세마을·이국정원','오후: 모나코 몬테카를로']},
+    {d:'D10',date:'11/24(화)',t:'리비에라 하루',stay:'니스 (4박)',meals:{b:'',l:'',d:''},items:['A안: 망통','B안: 캅페라 빌라 에프뤼시','C안: 칸 / 앙티브']},
+    {d:'D11',date:'11/25(수)',t:'니스 → 파리',stay:'파리 (1박)',meals:{b:'',l:'',d:''},items:['니스→파리 TGV(약 5시간 40분) 또는 항공(1시간 25분)','파리 도착']},
     {d:'D12',date:'11/26(목)',t:'로맨틱 파리',stay:'파리 (2박)',meals:{b:'',l:'',d:'Don Juan II 디너 크루즈'},items:['생루이 섬·파사주·마레 산책']},
     {d:'D13',date:'11/27(금)',t:'귀국',stay:'',meals:{b:'',l:'',d:'기내식'},items:['아시아나 파리→인천 (11/28 도착)']}
   ];
@@ -1578,7 +1580,12 @@ var PB_INFO={"니스 구시가 & 프롬나드 데 장글레": {"web": "https://w
   function syncMsg(t,c){ var b=document.getElementById('hm-sync'); if(b){ b.textContent=t; b.style.color=c||'#a89e8d'; } }
 
   var HM={ data:{}, fx:null, filt:'all', tfilt:'all', cur:'sched', _ls:null, _lc:null, _lb:null, _pend:false, _edit:null,
-    load:function(){ this.data.sched=normSched(LS.get('hm2026-sched',null)||JSON.parse(JSON.stringify(SEED_SCHED)));
+    load:function(){
+      var sv=LS.get('hm2026-schedver',0);
+      if(sv<SCHED_VER){ this.data.sched=normSched(JSON.parse(JSON.stringify(SEED_SCHED)));
+        LS.set('hm2026-sched',this.data.sched); LS.set('hm2026-schedver',SCHED_VER);
+        this._schedReset=true; this._ls=JSON.stringify(this.data.sched); }
+      else { this.data.sched=normSched(LS.get('hm2026-sched',null)||JSON.parse(JSON.stringify(SEED_SCHED))); }
       this.data.cost=LS.get('hm2026-cost',null)||JSON.parse(JSON.stringify(SEED_COST));
       this.data.cost.forEach(function(r,i){ if(r.id==null)r.id=Date.now()+i; });
       this.data.book=normBook(LS.get('hm2026-book',null)||(typeof PB!=='undefined'?JSON.parse(JSON.stringify(PB)):[]));
@@ -1607,7 +1614,9 @@ var PB_INFO={"니스 구시가 & 프롬나드 데 장글레": {"web": "https://w
       var onErr=function(){ syncMsg('⚠ 동기화 권한 없음 — Firebase 규칙 확인 필요','#b5424e'); };
       fbSched.on('value',function(snap){ var v=snap.val();
         if(v==null){ self._ls=JSON.stringify(self.data.sched); fbSched.set(self._ls).catch(onErr); return; }
-        if(v===self._ls)return; try{ var p=JSON.parse(v); if(Array.isArray(p)){ self.data.sched=normSched(p); LS.set('hm2026-sched',self.data.sched); self.applyRemote(); } }catch(e){} }, onErr);
+        if(v===self._ls){ self._schedReset=false; return; }
+        if(self._schedReset){ self._ls=JSON.stringify(self.data.sched); fbSched.set(self._ls).catch(onErr); self._schedReset=false; return; }
+        try{ var p=JSON.parse(v); if(Array.isArray(p)){ self.data.sched=normSched(p); LS.set('hm2026-sched',self.data.sched); self.applyRemote(); } }catch(e){} }, onErr);
       fbCost.on('value',function(snap){ var v=snap.val();
         if(v==null){ self._lc=JSON.stringify(self.data.cost); fbCost.set(self._lc).catch(onErr); return; }
         if(v===self._lc)return; try{ var p=JSON.parse(v); if(Array.isArray(p)){ self.data.cost=p; LS.set('hm2026-cost',p); self.applyRemote(); } }catch(e){} }, onErr);

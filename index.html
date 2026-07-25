@@ -1363,8 +1363,9 @@ var PB = [
   #modeHoneymoon{ display:none; background:#faf7f2; min-height:100vh; }
   #modeHoneymoon.on{ display:block; }
   #modeHoneymoon *{ box-sizing:border-box; }
-  #modeHoneymoon .hm-wrap{ max-width:760px; margin:0 auto; padding:26px 16px 120px; color:#2b2622;
+  #modeHoneymoon .hm-wrap{ max-width:1120px; margin:0 auto; padding:26px 16px 120px; color:#2b2622;
     font-family:'Pretendard Variable',Pretendard,-apple-system,'Apple SD Gothic Neo',sans-serif; }
+  #modeHoneymoon #ht-sched, #modeHoneymoon #ht-cost{ max-width:760px; margin-left:auto; margin-right:auto; }
   #modeHoneymoon .hm-eyebrow{ letter-spacing:.28em; font-size:11px; color:#b08d4f; font-weight:700; text-align:center; }
   #modeHoneymoon .hm-h1{ text-align:center; font-size:26px; font-weight:800; margin:8px 0 2px; letter-spacing:-.01em; }
   #modeHoneymoon .hm-h1 em{ font-style:normal; color:#b08d4f; }
@@ -1441,7 +1442,8 @@ var PB = [
   #modeHoneymoon .hm-filters{ display:flex; gap:7px; justify-content:center; flex-wrap:wrap; margin-bottom:18px; }
   #modeHoneymoon .hm-chip{ border:1px solid #e8e1d6; background:#fff; border-radius:999px; padding:7px 15px; font-size:12.5px; color:#6f675e; cursor:pointer; font-family:inherit; }
   #modeHoneymoon .hm-chip.on{ background:#2b2622; color:#fff; border-color:#2b2622; }
-  #modeHoneymoon .hm-masonry{ columns:2 300px; column-gap:14px; }
+  #modeHoneymoon .hm-masonry{ columns:3 300px; column-gap:16px; }
+  @media (max-width:760px){ #modeHoneymoon .hm-masonry{ columns:2 150px; column-gap:12px; } }
   #modeHoneymoon .hm-card{ break-inside:avoid; margin-bottom:14px; background:#fff; border-radius:16px; overflow:hidden; border:1px solid #e8e1d6; cursor:pointer; }
   #modeHoneymoon .hm-card img{ width:100%; display:block; background:#eee; }
   #modeHoneymoon .hm-card .cb{ padding:14px 16px 16px; }
@@ -1469,6 +1471,17 @@ var PB = [
   #hm-overlay .ct li::before{ content:""; position:absolute; left:2px; top:10px; width:5px; height:5px; border-radius:50%; background:#b08d4f; }
   #hm-overlay .tip{ background:#f6efe2; border-radius:12px; padding:14px 16px; font-size:13px; line-height:1.75; color:#5c5140; margin-top:20px; }
   #hm-overlay .st{ margin-top:22px; padding:16px 18px; border-left:3px solid #b08d4f; background:#fbf8f2; border-radius:0 12px 12px 0; font-size:13px; line-height:1.85; color:#5c5140; font-style:italic; }
+  #hm-overlay .bf-l{ font-size:12px; font-weight:700; color:#8a8177; margin:15px 0 5px; }
+  #hm-overlay .bf-in{ width:100%; font-family:inherit; font-size:14px; border:1px solid #e8e1d6; border-radius:9px; padding:9px 11px; color:#2b2622; background:#fff; }
+  #hm-overlay .bf-in:focus{ outline:none; border-color:#b08d4f; }
+  #hm-overlay textarea.bf-in{ min-height:62px; resize:vertical; line-height:1.6; }
+  #hm-overlay .bf-btns{ display:flex; gap:8px; margin-top:22px; }
+  #hm-overlay .bf-btns button{ flex:1; font-family:inherit; font-size:14px; font-weight:700; padding:11px; border-radius:10px; cursor:pointer; border:1px solid #e8e1d6; background:#fff; color:#6f675e; }
+  #hm-overlay .bf-btns .save{ background:#2b2622; color:#fff; border-color:#2b2622; }
+  #hm-overlay .bf-btns .del{ color:#b5424e; border-color:#e6cdcf; flex:0 0 auto; padding:11px 16px; }
+  #modeHoneymoon .hm-card .edit-hint{ position:absolute; top:8px; right:8px; background:rgba(0,0,0,.5); color:#fff; font-size:11px; padding:3px 8px; border-radius:999px; opacity:0; transition:.15s; }
+  #modeHoneymoon .hm-card{ position:relative; }
+  #modeHoneymoon .hm-card:hover .edit-hint{ opacity:1; }
 </style>
 
 <div id="modeHoneymoon">
@@ -1528,25 +1541,33 @@ var PB = [
   /* ── Firebase 동기화 (결혼준비 앱과 같은 방 재사용) ── */
   var room=null; try{ room=localStorage.getItem('wp-room'); }catch(e){}
   var FB=(typeof firebase!=='undefined' && !!room);
-  var fbSched=null, fbCost=null;
+  var fbSched=null, fbCost=null, fbBook=null;
   if(FB){ try{ fbSched=firebase.database().ref('honeymoon/'+room+'/sched');
-               fbCost =firebase.database().ref('honeymoon/'+room+'/cost'); }catch(e){ FB=false; } }
+               fbCost =firebase.database().ref('honeymoon/'+room+'/cost');
+               fbBook =firebase.database().ref('honeymoon/'+room+'/book'); }catch(e){ FB=false; } }
+  function normBook(arr){ if(!Array.isArray(arr))return arr; arr.forEach(function(p,i){
+    if(p.id==null)p.id=Date.now()+i; if(!Array.isArray(p.hl))p.hl=p.hl?[p.hl]:[]; if(!Array.isArray(p.info))p.info=p.info?[p.info]:[]; }); return arr; }
+  var REGIONS=[['nice','남프랑스'],['dolo','돌로미티'],['venice','베네치아'],['paris','파리']];
+  function regionLabel(r){ for(var i=0;i<REGIONS.length;i++)if(REGIONS[i][0]===r)return REGIONS[i][1]; return r; }
   function syncMsg(t,c){ var b=document.getElementById('hm-sync'); if(b){ b.textContent=t; b.style.color=c||'#a89e8d'; } }
 
-  var HM={ data:{}, fx:null, filt:'all', cur:'sched', _ls:null, _lc:null, _pend:false, _edit:null,
+  var HM={ data:{}, fx:null, filt:'all', cur:'sched', _ls:null, _lc:null, _lb:null, _pend:false, _edit:null,
     load:function(){ this.data.sched=normSched(LS.get('hm2026-sched',null)||JSON.parse(JSON.stringify(SEED_SCHED)));
       this.data.cost=LS.get('hm2026-cost',null)||JSON.parse(JSON.stringify(SEED_COST));
       this.data.cost.forEach(function(r,i){ if(r.id==null)r.id=Date.now()+i; });
+      this.data.book=normBook(LS.get('hm2026-book',null)||(typeof PB!=='undefined'?JSON.parse(JSON.stringify(PB)):[]));
       this.fx=LS.get('hm2026-fx',null)||FX_FALLBACK; },
-    save:function(){ LS.set('hm2026-sched',this.data.sched); LS.set('hm2026-cost',this.data.cost);
+    save:function(){ LS.set('hm2026-sched',this.data.sched); LS.set('hm2026-cost',this.data.cost); LS.set('hm2026-book',this.data.book);
+      var warn=function(){ syncMsg('⚠ 동기화 권한 없음 — Firebase 규칙 확인 필요','#b5424e'); };
       if(FB){ try{
-        this._ls=JSON.stringify(this.data.sched); fbSched.set(this._ls).catch(function(){ syncMsg('⚠ 동기화 권한 없음 — Firebase 규칙 확인 필요','#b5424e'); });
-        this._lc=JSON.stringify(this.data.cost);  fbCost.set(this._lc).catch(function(){ syncMsg('⚠ 동기화 권한 없음 — Firebase 규칙 확인 필요','#b5424e'); });
+        this._ls=JSON.stringify(this.data.sched); fbSched.set(this._ls).catch(warn);
+        this._lc=JSON.stringify(this.data.cost);  fbCost.set(this._lc).catch(warn);
+        this._lb=JSON.stringify(this.data.book);  fbBook.set(this._lb).catch(warn);
       }catch(e){} } },
     isEditing:function(){ var a=document.activeElement; var host=document.getElementById('modeHoneymoon');
       return a && host && host.contains(a) && (a.isContentEditable||a.tagName==='INPUT'||a.tagName==='SELECT'); },
     applyRemote:function(){ if(this.isEditing()){ this._pend=true; return; }
-      if(this.cur==='sched')this.renderSched(); else if(this.cur==='cost')this.renderCost(); },
+      if(this.cur==='sched')this.renderSched(); else if(this.cur==='cost')this.renderCost(); else if(this.cur==='book')this.renderBook(); },
     connectFB:function(){ var self=this;
       if(!FB){ syncMsg('이 기기에만 저장 (동기화 꺼짐 — PIN 입력 후 새로고침)'); return; }
       var onErr=function(){ syncMsg('⚠ 동기화 권한 없음 — Firebase 규칙 확인 필요','#b5424e'); };
@@ -1556,6 +1577,9 @@ var PB = [
       fbCost.on('value',function(snap){ var v=snap.val();
         if(v==null){ self._lc=JSON.stringify(self.data.cost); fbCost.set(self._lc).catch(onErr); return; }
         if(v===self._lc)return; try{ var p=JSON.parse(v); if(Array.isArray(p)){ self.data.cost=p; LS.set('hm2026-cost',p); self.applyRemote(); } }catch(e){} }, onErr);
+      fbBook.on('value',function(snap){ var v=snap.val();
+        if(v==null){ self._lb=JSON.stringify(self.data.book); fbBook.set(self._lb).catch(onErr); return; }
+        if(v===self._lb)return; try{ var p=JSON.parse(v); if(Array.isArray(p)){ self.data.book=normBook(p); LS.set('hm2026-book',self.data.book); self.applyRemote(); } }catch(e){} }, onErr);
       document.getElementById('modeHoneymoon').addEventListener('focusout',function(){
         setTimeout(function(){ if(self._pend && !self.isEditing()){ self._pend=false; self.applyRemote(); } },160); });
       syncMsg('● 실시간 동기화 켜짐 (양쪽 기기 공유)','#4a7c59'); },
@@ -1645,26 +1669,57 @@ var PB = [
 
     /* ── 책자 ── */
     renderBook:function(){ var self=this; var el=document.getElementById('ht-book');
-      var tags={paris:['hm-t-paris','파리'],nice:['hm-t-nice','니스 · 리비에라'],dolo:['hm-t-dolo','돌로미티'],venice:['hm-t-venice','베네치아']};
+      var tagcls={paris:'hm-t-paris',nice:'hm-t-nice',dolo:'hm-t-dolo',venice:'hm-t-venice'};
       var fh='<div class="hm-filters">';
-      [['all','전체'],['nice','니스 · 리비에라'],['dolo','돌로미티'],['venice','베네치아'],['paris','파리']].forEach(function(f){
+      [['all','전체']].concat(REGIONS).forEach(function(f){
         fh+='<button class="hm-chip'+(self.filt===f[0]?' on':'')+'" onclick="HM.setFilt(\''+f[0]+'\')">'+f[1]+'</button>'; });
       fh+='</div><div class="hm-masonry">';
-      PB.forEach(function(p,i){ if(self.filt!=='all'&&p.r!==self.filt)return;
-        var lead=p.lead.length>96?p.lead.slice(0,96)+'…':p.lead;
-        fh+='<div class="hm-card" onclick="HM.openCard('+i+')"><img loading="lazy" src="'+p.img+'" alt="'+esc(p.t)+'">'+
-            '<div class="cb"><span class="hm-tag '+tags[p.r][0]+'">'+tags[p.r][1]+'</span><div class="cm">'+esc(p.day)+'</div>'+
-            '<h3>'+esc(p.t)+'</h3><p>'+esc(lead)+'</p></div></div>'; });
-      fh+='</div>'; el.innerHTML=fh; },
+      this.data.book.forEach(function(p,i){ if(self.filt!=='all'&&p.r!==self.filt)return;
+        var lead=(p.lead||'').length>96?p.lead.slice(0,96)+'…':(p.lead||'');
+        fh+='<div class="hm-card" onclick="HM.openCard('+i+')"><span class="edit-hint">눌러서 보기·수정</span>'+
+            (p.img?'<img loading="lazy" src="'+p.img+'" alt="'+esc(p.t)+'">':'')+
+            '<div class="cb"><span class="hm-tag '+(tagcls[p.r]||'')+'">'+esc(regionLabel(p.r))+'</span><div class="cm">'+esc(p.day||'')+'</div>'+
+            '<h3>'+esc(p.t||'')+'</h3><p>'+esc(lead)+'</p></div></div>'; });
+      fh+='</div><button class="hm-add" style="width:100%;padding:13px;margin-top:6px" onclick="HM.addBook()">＋ 장소 추가</button>';
+      el.innerHTML=fh; },
     setFilt:function(f){ this.filt=f; this.renderBook(); },
-    openCard:function(i){ var p=PB[i];
-      document.getElementById('hm-m-img').src=p.img; document.getElementById('hm-m-title').textContent=p.t;
-      document.getElementById('hm-m-day').textContent=p.day;
-      document.getElementById('hm-m-body').innerHTML='<p class="lead">'+esc(p.lead)+'</p>'+
-        '<h4>💡 하이라이트</h4><ul>'+p.hl.map(function(x){return '<li>'+esc(x)+'</li>';}).join('')+'</ul>'+
-        '<h4>ℹ️ 실용 정보</h4><ul>'+p.info.map(function(x){return '<li>'+esc(x)+'</li>';}).join('')+'</ul>'+
-        '<div class="tip"><b>TIP</b> · '+esc(p.tip)+'</div><div class="st">'+esc(p.story)+'</div>';
+    openCard:function(i){ var p=this.data.book[i]; if(!p)return;
+      document.getElementById('hm-m-img').src=p.img||'';
+      document.getElementById('hm-m-img').style.display=p.img?'block':'none';
+      document.getElementById('hm-m-title').textContent=p.t||'';
+      document.getElementById('hm-m-day').textContent=(regionLabel(p.r))+(p.day?' · '+p.day:'');
+      document.getElementById('hm-m-body').innerHTML='<p class="lead">'+esc(p.lead||'')+'</p>'+
+        (p.hl&&p.hl.length?'<h4>💡 하이라이트</h4><ul>'+p.hl.map(function(x){return '<li>'+esc(x)+'</li>';}).join('')+'</ul>':'')+
+        (p.info&&p.info.length?'<h4>ℹ️ 실용 정보</h4><ul>'+p.info.map(function(x){return '<li>'+esc(x)+'</li>';}).join('')+'</ul>':'')+
+        (p.tip?'<div class="tip"><b>TIP</b> · '+esc(p.tip)+'</div>':'')+
+        (p.story?'<div class="st">'+esc(p.story)+'</div>':'')+
+        '<div class="bf-btns"><button class="save" onclick="HM.editBook('+i+')">✏ 수정</button>'+
+        '<button class="del" onclick="HM.delBook('+i+')">🗑 삭제</button></div>';
       document.getElementById('hm-overlay').classList.add('on'); document.body.style.overflow='hidden'; },
+    editBook:function(i){ var p=this.data.book[i]; if(!p)return;
+      document.getElementById('hm-m-img').src=p.img||''; document.getElementById('hm-m-img').style.display=p.img?'block':'none';
+      document.getElementById('hm-m-title').textContent='장소 편집'; document.getElementById('hm-m-day').textContent='';
+      var reg=REGIONS.map(function(r){return '<option value="'+r[0]+'"'+(r[0]===p.r?' selected':'')+'>'+r[1]+'</option>';}).join('');
+      document.getElementById('hm-m-body').innerHTML=
+        '<div class="bf-l">지역</div><select id="bf-r" class="bf-in">'+reg+'</select>'+
+        '<div class="bf-l">일정 메모 (예: D6 · 11/20)</div><input id="bf-day" class="bf-in" value="'+esc(p.day||'')+'">'+
+        '<div class="bf-l">제목</div><input id="bf-t" class="bf-in" value="'+esc(p.t||'')+'">'+
+        '<div class="bf-l">이미지 URL</div><input id="bf-img" class="bf-in" value="'+esc(p.img||'')+'" placeholder="https://...">'+
+        '<div class="bf-l">소개</div><textarea id="bf-lead" class="bf-in">'+esc(p.lead||'')+'</textarea>'+
+        '<div class="bf-l">💡 하이라이트 (한 줄에 하나씩)</div><textarea id="bf-hl" class="bf-in">'+esc((p.hl||[]).join('\n'))+'</textarea>'+
+        '<div class="bf-l">ℹ️ 실용 정보 (한 줄에 하나씩)</div><textarea id="bf-info" class="bf-in">'+esc((p.info||[]).join('\n'))+'</textarea>'+
+        '<div class="bf-l">TIP</div><textarea id="bf-tip" class="bf-in">'+esc(p.tip||'')+'</textarea>'+
+        '<div class="bf-l">이야기</div><textarea id="bf-story" class="bf-in">'+esc(p.story||'')+'</textarea>'+
+        '<div class="bf-btns"><button onclick="HM.openCard('+i+')">취소</button><button class="save" onclick="HM.saveBook('+i+')">저장</button></div>';
+      document.getElementById('hm-overlay').classList.add('on'); document.body.style.overflow='hidden'; },
+    saveBook:function(i){ var p=this.data.book[i]; if(!p)return; var g=function(id){return document.getElementById(id).value;};
+      var lines=function(id){return g(id).split('\n').map(function(s){return s.trim();}).filter(Boolean);};
+      p.r=g('bf-r'); p.day=g('bf-day').trim(); p.t=g('bf-t').trim(); p.img=g('bf-img').trim();
+      p.lead=g('bf-lead').trim(); p.hl=lines('bf-hl'); p.info=lines('bf-info'); p.tip=g('bf-tip').trim(); p.story=g('bf-story').trim();
+      this.save(); this.renderBook(); this.openCard(i); },
+    addBook:function(){ var id=Date.now(); this.data.book.push({id:id,r:(this.filt!=='all'?this.filt:'dolo'),day:'',t:'새 장소',img:'',lead:'',hl:[],info:[],tip:'',story:''});
+      this.save(); this.editBook(this.data.book.length-1); },
+    delBook:function(i){ if(confirm('이 장소를 삭제할까요?')){ this.data.book.splice(i,1); this.save(); this.closeCard(); this.renderBook(); } },
     closeCard:function(){ document.getElementById('hm-overlay').classList.remove('on'); document.body.style.overflow=''; },
 
     init:function(){ this.load(); this.renderSched(); this.fetchFX(); this.connectFB(); }

@@ -1449,6 +1449,7 @@ var PB = [
   #modeHoneymoon .hm-card .cb{ padding:14px 16px 16px; }
   #modeHoneymoon .hm-tag{ display:inline-block; font-size:10.5px; font-weight:700; padding:3px 9px; border-radius:999px; color:#fff; margin-bottom:8px; }
   #modeHoneymoon .hm-t-paris{background:#c25450}#modeHoneymoon .hm-t-nice{background:#3d6f9e}#modeHoneymoon .hm-t-dolo{background:#4a7c59}#modeHoneymoon .hm-t-venice{background:#b0567e}
+  #modeHoneymoon .hm-tag2{ display:inline-block; font-size:10.5px; font-weight:700; padding:3px 8px; border-radius:999px; margin:0 0 8px 5px; background:#efe9dd; color:#8a6d3b; }
   #modeHoneymoon .hm-card h3{ font-size:16px; font-weight:800; line-height:1.35; margin:0 0 5px; }
   #modeHoneymoon .hm-card .cm{ font-size:11.5px; color:#b08d4f; font-weight:700; margin-bottom:7px; }
   #modeHoneymoon .hm-card p{ font-size:13px; color:#6f675e; line-height:1.7; margin:0; }
@@ -1487,8 +1488,8 @@ var PB = [
 <div id="modeHoneymoon">
   <div class="hm-wrap">
     <div class="hm-eyebrow">HONEYMOON 2026 · NOV 15 – 27</div>
-    <h1 class="hm-h1">파리 · 니스 · <em>돌로미티</em></h1>
-    <div class="hm-dsub">신영 &amp; ♥ 의 신혼여행 — 일정·비용은 화면에서 바로 수정돼요<br><span class="hm-sync" id="hm-sync">저장 준비 중…</span></div>
+    <h1 class="hm-h1">파리 · 남프랑스 · <em>돌로미티</em></h1>
+    <div class="hm-dsub">영원커플 청실홍실 신혼여행<span class="hm-sync" id="hm-sync" style="display:none"></span></div>
     <nav class="hm-subtabs">
       <button data-ht="sched" class="on" onclick="HM.tab('sched')">🗓 일정</button>
       <button data-ht="cost" onclick="HM.tab('cost')">💰 비용</button>
@@ -1551,13 +1552,15 @@ var PB = [
   if(FB){ try{ fbSched=firebase.database().ref('honeymoon/'+room+'/sched');
                fbCost =firebase.database().ref('honeymoon/'+room+'/cost');
                fbBook =firebase.database().ref('honeymoon/'+room+'/book'); }catch(e){ FB=false; } }
+  var BTYPES=['관광지','숙소','식당'];
   function normBook(arr){ if(!Array.isArray(arr))return arr; arr.forEach(function(p,i){
-    if(p.id==null)p.id=Date.now()+i; if(!Array.isArray(p.hl))p.hl=p.hl?[p.hl]:[]; if(!Array.isArray(p.info))p.info=p.info?[p.info]:[]; }); return arr; }
+    if(p.id==null)p.id=Date.now()+i; if(!Array.isArray(p.hl))p.hl=p.hl?[p.hl]:[]; if(!Array.isArray(p.info))p.info=p.info?[p.info]:[];
+    if(!p.cat)p.cat= /트랑 블루|보핀제|부이용|Don Juan|브라스리|레스토랑|식당|크루즈|샤르티에/.test(p.t||'') ? '식당' : '관광지'; }); return arr; }
   var REGIONS=[['nice','남프랑스'],['dolo','돌로미티'],['venice','베네치아'],['paris','파리']];
   function regionLabel(r){ for(var i=0;i<REGIONS.length;i++)if(REGIONS[i][0]===r)return REGIONS[i][1]; return r; }
   function syncMsg(t,c){ var b=document.getElementById('hm-sync'); if(b){ b.textContent=t; b.style.color=c||'#a89e8d'; } }
 
-  var HM={ data:{}, fx:null, filt:'all', cur:'sched', _ls:null, _lc:null, _lb:null, _pend:false, _edit:null,
+  var HM={ data:{}, fx:null, filt:'all', tfilt:'all', cur:'sched', _ls:null, _lc:null, _lb:null, _pend:false, _edit:null,
     load:function(){ this.data.sched=normSched(LS.get('hm2026-sched',null)||JSON.parse(JSON.stringify(SEED_SCHED)));
       this.data.cost=LS.get('hm2026-cost',null)||JSON.parse(JSON.stringify(SEED_COST));
       this.data.cost.forEach(function(r,i){ if(r.id==null)r.id=Date.now()+i; });
@@ -1677,24 +1680,31 @@ var PB = [
     renderBook:function(){ var self=this; var el=document.getElementById('ht-book');
       var tagcls={paris:'hm-t-paris',nice:'hm-t-nice',dolo:'hm-t-dolo',venice:'hm-t-venice'};
       var fh='<button class="hm-add" style="width:100%;padding:12px;margin-bottom:14px" onclick="HM.addBook()">＋ 장소 추가</button>';
-      fh+='<div class="hm-filters">';
+      fh+='<div class="hm-filters" style="margin-bottom:8px">';
       [['all','전체']].concat(REGIONS).forEach(function(f){
         fh+='<button class="hm-chip'+(self.filt===f[0]?' on':'')+'" onclick="HM.setFilt(\''+f[0]+'\')">'+f[1]+'</button>'; });
+      fh+='</div><div class="hm-filters">';
+      ['all'].concat(BTYPES).forEach(function(t){
+        fh+='<button class="hm-chip'+(self.tfilt===t?' on':'')+'" onclick="HM.setTypeFilt(\''+t+'\')">'+(t==='all'?'전체':t)+'</button>'; });
       fh+='</div><div class="hm-masonry">';
-      this.data.book.forEach(function(p,i){ if(self.filt!=='all'&&p.r!==self.filt)return;
+      this.data.book.forEach(function(p,i){
+        if(self.filt!=='all'&&p.r!==self.filt)return;
+        if(self.tfilt!=='all'&&p.cat!==self.tfilt)return;
         var lead=(p.lead||'').length>96?p.lead.slice(0,96)+'…':(p.lead||'');
         fh+='<div class="hm-card" onclick="HM.openCard('+i+')"><span class="edit-hint">눌러서 보기·수정</span>'+
             (p.img?'<img loading="lazy" src="'+p.img+'" alt="'+esc(p.t)+'">':'')+
-            '<div class="cb"><span class="hm-tag '+(tagcls[p.r]||'')+'">'+esc(regionLabel(p.r))+'</span><div class="cm">'+esc(p.day||'')+'</div>'+
+            '<div class="cb"><span class="hm-tag '+(tagcls[p.r]||'')+'">'+esc(regionLabel(p.r))+'</span>'+
+            '<span class="hm-tag2">'+esc(p.cat||'관광지')+'</span><div class="cm">'+esc(p.day||'')+'</div>'+
             '<h3>'+esc(p.t||'')+'</h3><p>'+esc(lead)+'</p></div></div>'; });
       fh+='</div>';
       el.innerHTML=fh; },
+    setTypeFilt:function(t){ this.tfilt=t; this.renderBook(); },
     setFilt:function(f){ this.filt=f; this.renderBook(); },
     openCard:function(i){ var p=this.data.book[i]; if(!p)return;
       document.getElementById('hm-m-img').src=p.img||'';
       document.getElementById('hm-m-img').style.display=p.img?'block':'none';
       document.getElementById('hm-m-title').textContent=p.t||'';
-      document.getElementById('hm-m-day').textContent=(regionLabel(p.r))+(p.day?' · '+p.day:'');
+      document.getElementById('hm-m-day').textContent=regionLabel(p.r)+' · '+(p.cat||'관광지')+(p.day?' · '+p.day:'');
       document.getElementById('hm-m-body').innerHTML='<p class="lead">'+esc(p.lead||'')+'</p>'+
         (p.hl&&p.hl.length?'<h4>💡 하이라이트</h4><ul>'+p.hl.map(function(x){return '<li>'+esc(x)+'</li>';}).join('')+'</ul>':'')+
         (p.info&&p.info.length?'<h4>ℹ️ 실용 정보</h4><ul>'+p.info.map(function(x){return '<li>'+esc(x)+'</li>';}).join('')+'</ul>':'')+
@@ -1709,6 +1719,7 @@ var PB = [
       var reg=REGIONS.map(function(r){return '<option value="'+r[0]+'"'+(r[0]===p.r?' selected':'')+'>'+r[1]+'</option>';}).join('');
       document.getElementById('hm-m-body').innerHTML=
         '<div class="bf-l">지역</div><select id="bf-r" class="bf-in">'+reg+'</select>'+
+        '<div class="bf-l">카테고리</div><select id="bf-cat" class="bf-in">'+BTYPES.map(function(c){return '<option'+(c===(p.cat||'관광지')?' selected':'')+'>'+c+'</option>';}).join('')+'</select>'+
         '<div class="bf-l">일정 메모 (예: D6 · 11/20)</div><input id="bf-day" class="bf-in" value="'+esc(p.day||'')+'">'+
         '<div class="bf-l">제목</div><input id="bf-t" class="bf-in" value="'+esc(p.t||'')+'">'+
         '<div class="bf-l">이미지 URL</div><input id="bf-img" class="bf-in" value="'+esc(p.img||'')+'" placeholder="https://...">'+
@@ -1721,10 +1732,10 @@ var PB = [
       document.getElementById('hm-overlay').classList.add('on'); document.body.style.overflow='hidden'; },
     saveBook:function(i){ var p=this.data.book[i]; if(!p)return; var g=function(id){return document.getElementById(id).value;};
       var lines=function(id){return g(id).split('\n').map(function(s){return s.trim();}).filter(Boolean);};
-      p.r=g('bf-r'); p.day=g('bf-day').trim(); p.t=g('bf-t').trim(); p.img=g('bf-img').trim();
+      p.r=g('bf-r'); p.cat=g('bf-cat'); p.day=g('bf-day').trim(); p.t=g('bf-t').trim(); p.img=g('bf-img').trim();
       p.lead=g('bf-lead').trim(); p.hl=lines('bf-hl'); p.info=lines('bf-info'); p.tip=g('bf-tip').trim(); p.story=g('bf-story').trim();
       this.save(); this.renderBook(); this.openCard(i); },
-    addBook:function(){ var id=Date.now(); this.data.book.push({id:id,r:(this.filt!=='all'?this.filt:'dolo'),day:'',t:'새 장소',img:'',lead:'',hl:[],info:[],tip:'',story:''});
+    addBook:function(){ var id=Date.now(); this.data.book.push({id:id,r:(this.filt!=='all'?this.filt:'dolo'),cat:(this.tfilt!=='all'?this.tfilt:'관광지'),day:'',t:'새 장소',img:'',lead:'',hl:[],info:[],tip:'',story:''});
       this.save(); this.editBook(this.data.book.length-1); },
     delBook:function(i){ if(confirm('이 장소를 삭제할까요?')){ this.data.book.splice(i,1); this.save(); this.closeCard(); this.renderBook(); } },
     closeCard:function(){ document.getElementById('hm-overlay').classList.remove('on'); document.body.style.overflow=''; },

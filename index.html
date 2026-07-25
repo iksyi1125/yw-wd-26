@@ -1272,6 +1272,12 @@ var PB = [
  info:['입장 무료 · P4 주차장 24시간 (겨울 시간제 소액)','여름 예약제는 11월 해당 없음'],
  tip:'서쪽 호안 보드워크는 그늘이라 결빙 잦음 — 미니 아이젠 지참, 미끄러우면 동쪽 구간만. 매점 휴업 대비 물·간식 미리.',
  story:'1945년 4월, SS가 다하우 수용소의 "저명인사 인질" 139명을 이 호숫가 호텔로 이송했고 여기서 미군에 의해 해방됐어요.'},
+{r:'dolo',day:'D6 · 11/20 (금) 옵션',t:'까르짜 호수 (Lago di Carezza)',img:'https://upload.wikimedia.org/wikipedia/commons/f/f4/Lago_Carezza.JPG',
+ lead:'라테마르 산군을 거울처럼 비추는 에메랄드빛 "무지개 호수". 돌로미티에서 가장 사진이 예쁜 호수 중 하나로, 볼차노~코르티나 사이 발 데가(Val d’Ega)에 있어 드라이브 중 들르기 좋아요.',
+ hl:['전망 데크 — 라테마르·카티나초 반영이 최고인 포토스팟','호수 한 바퀴 — 평탄한 산책로 약 30분','겨울엔 얼어붙은 수면이 동화 같은 풍경'],
+ info:['해발 1,534m · 볼차노에서 약 26km','호수 옆 주차장 유료(예약 불가) · 연중 개방','방문자센터는 11/25부터 09:00~17:00'],
+ tip:'11월엔 결빙·눈길 미끄럼 주의. 오전 잔잔할 때 반영이 가장 예뻐요. 코르티나 호수 투어(D6)나 볼차노 일정(D11)에 끼워넣기 좋아요.',
+ story:'전설에 따르면 호수엔 물의 요정 온디나가 살았고, 마법사 마사레가 무지개 보석으로 환심을 사려다 실패하자 무지개를 부숴 호수에 흩뿌렸대요 — 그 뒤로 물빛이 무지개색으로 빛난다는 "무지개 호수" 이야기가 전해집니다.'},
 {r:'dolo',day:'D7 · 11/21 (토)',t:'오르티세이 (Ortisei)',img:'https://upload.wikimedia.org/wikipedia/commons/c/ca/Ortisei.JPG',
  lead:'발 가르데나의 중심이자 라딘 문화의 심장. 파스텔 건물과 목공예 갤러리 거리 뒤로 사소룽고가 솟아 있어요. 비수기의 고요함이 오히려 매력.',
  hl:['보행자 중심가 — 성 우다리코 교회와 파스텔 거리','무료 야외 에스컬레이터 — 마을 상부에서 사소룽고 조망','목공예 공방 — 400년 전통, 기념품 최적'],
@@ -1420,6 +1426,16 @@ var PB = [
   #modeHoneymoon .hm-erow .e-memo{ width:100%; margin-top:8px; }
   #modeHoneymoon .hm-erow .e-krw{ font-size:12px; color:#4a7c59; font-weight:700; margin-top:7px; }
   #modeHoneymoon .hm-erow .e-krw span{ color:#a89e8d; font-weight:500; }
+  #modeHoneymoon .hm-erow.editing{ border-color:#b08d4f; box-shadow:0 2px 12px rgba(176,141,79,.14); }
+  #modeHoneymoon .hm-eline{ display:flex; align-items:center; gap:8px; padding:11px 13px; background:#fff;
+    border:1px solid #e8e1d6; border-radius:11px; margin-bottom:8px; cursor:pointer; font-size:13px; }
+  #modeHoneymoon .hm-eline:hover{ border-color:#d8cfbf; }
+  #modeHoneymoon .el-cat{ font-size:11px; font-weight:700; background:#f1efea; color:#6f675e; padding:3px 9px; border-radius:999px; white-space:nowrap; flex-shrink:0; }
+  #modeHoneymoon .el-memo{ flex:1; min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; color:#463f37; }
+  #modeHoneymoon .el-cur{ font-size:11.5px; color:#a89e8d; font-weight:600; flex-shrink:0; }
+  #modeHoneymoon .el-amt{ font-weight:600; color:#463f37; flex-shrink:0; }
+  #modeHoneymoon .el-krw{ font-weight:800; color:#4a7c59; flex-shrink:0; white-space:nowrap; }
+  #modeHoneymoon .el-x{ margin-left:2px; }
 
   /* 책자 */
   #modeHoneymoon .hm-filters{ display:flex; gap:7px; justify-content:center; flex-wrap:wrap; margin-bottom:18px; }
@@ -1517,9 +1533,10 @@ var PB = [
                fbCost =firebase.database().ref('honeymoon/'+room+'/cost'); }catch(e){ FB=false; } }
   function syncMsg(t,c){ var b=document.getElementById('hm-sync'); if(b){ b.textContent=t; b.style.color=c||'#a89e8d'; } }
 
-  var HM={ data:{}, fx:null, filt:'all', cur:'sched', _ls:null, _lc:null, _pend:false,
+  var HM={ data:{}, fx:null, filt:'all', cur:'sched', _ls:null, _lc:null, _pend:false, _edit:null,
     load:function(){ this.data.sched=normSched(LS.get('hm2026-sched',null)||JSON.parse(JSON.stringify(SEED_SCHED)));
       this.data.cost=LS.get('hm2026-cost',null)||JSON.parse(JSON.stringify(SEED_COST));
+      this.data.cost.forEach(function(r,i){ if(r.id==null)r.id=Date.now()+i; });
       this.fx=LS.get('hm2026-fx',null)||FX_FALLBACK; },
     save:function(){ LS.set('hm2026-sched',this.data.sched); LS.set('hm2026-cost',this.data.cost);
       if(FB){ try{
@@ -1596,21 +1613,35 @@ var PB = [
       CATS.forEach(function(c){ if(byCat[c])h+='<span>'+c+' ₩'+fmt(byCat[c])+'</span>'; });
       h+='</div></div>';
       this.data.cost.forEach(function(r,i){
-        var catopt=CATS.map(function(c){return '<option'+(c===r.cat?' selected':'')+'>'+c+'</option>';}).join('');
-        var curopt=CURS.map(function(c){return '<option'+(c===r.cur?' selected':'')+'>'+c+'</option>';}).join('');
-        h+='<div class="hm-erow"><div class="r1">'+
-           '<select class="e-cat" onchange="HM.editCost('+i+',\'cat\',this.value)">'+catopt+'</select>'+
-           '<select class="e-cur" onchange="HM.editCost('+i+',\'cur\',this.value)">'+curopt+'</select>'+
-           '<input class="e-amt" type="number" inputmode="decimal" value="'+esc(r.amt)+'" onchange="HM.editCost('+i+',\'amt\',this.value)" placeholder="금액">'+
-           '<button class="hm-x" onclick="HM.delCost('+i+')">✕</button></div>'+
-           '<input class="e-memo" value="'+esc(r.memo||'')+'" onchange="HM.editCost('+i+',\'memo\',this.value)" placeholder="메모 (예: 호텔명, 예약번호)">'+
-           '<div class="e-krw">₩'+fmt(this.krw(r.cur,+r.amt||0))+' <span>('+esc(r.cur)+' '+esc(r.amt)+')</span></div></div>';
-      },this);
-      h+='<button class="hm-add" style="width:100%;padding:12px" onclick="HM.addCost()">＋ 지출 추가</button>';
+        if(r.id===self._edit){
+          var catopt=CATS.map(function(c){return '<option'+(c===r.cat?' selected':'')+'>'+c+'</option>';}).join('');
+          var curopt=CURS.map(function(c){return '<option'+(c===r.cur?' selected':'')+'>'+c+'</option>';}).join('');
+          h+='<div class="hm-erow editing"><div class="r1">'+
+             '<select class="e-cat" onchange="HM.editCost('+i+',\'cat\',this.value)">'+catopt+'</select>'+
+             '<select class="e-cur" onchange="HM.editCost('+i+',\'cur\',this.value)">'+curopt+'</select>'+
+             '<input class="e-amt" type="number" inputmode="decimal" value="'+esc(r.amt)+'" onchange="HM.editCost('+i+',\'amt\',this.value)" placeholder="금액">'+
+             '<button class="hm-x" onclick="HM.delCost('+i+')">✕</button></div>'+
+             '<input class="e-memo" value="'+esc(r.memo||'')+'" onchange="HM.editCost('+i+',\'memo\',this.value)" placeholder="내용 (예: 호텔명, 항공편)">'+
+             '<div class="e-krw">₩'+fmt(self.krw(r.cur,+r.amt||0))+' <span>('+esc(r.cur)+' '+esc(r.amt)+')</span></div>'+
+             '<button class="hm-add" style="margin-top:10px;font-size:12.5px;padding:6px 16px" onclick="HM.doneEdit()">✓ 완료</button></div>';
+        } else {
+          var memo=r.memo? esc(r.memo) : '<span style="color:#c3bcae">내용 없음</span>';
+          h+='<div class="hm-eline" onclick="HM.editRow('+r.id+')">'+
+             '<span class="el-cat">'+esc(r.cat)+'</span>'+
+             '<span class="el-memo">'+memo+'</span>'+
+             '<span class="el-cur">'+esc(r.cur)+'</span>'+
+             '<span class="el-amt">'+esc(r.amt)+'</span>'+
+             '<span class="el-krw">₩'+fmt(self.krw(r.cur,+r.amt||0))+'</span>'+
+             '<button class="hm-x el-x" onclick="event.stopPropagation();HM.delCost('+i+')">✕</button></div>';
+        }
+      });
+      h+='<button class="hm-add" style="width:100%;padding:12px;margin-top:4px" onclick="HM.addCost()">＋ 지출 추가</button>';
       el.innerHTML=h; },
     editCost:function(i,k,v){ this.data.cost[i][k]=(k==='amt')?(+v||0):v; this.save(); this.renderCost(); },
-    addCost:function(){ var id=Date.now(); this.data.cost.push({id:id,cat:'기타',cur:'EUR',amt:0,memo:''}); this.save(); this.renderCost(); },
-    delCost:function(i){ this.data.cost.splice(i,1); this.save(); this.renderCost(); },
+    editRow:function(id){ this._edit=id; this.renderCost(); },
+    doneEdit:function(){ this._edit=null; this.renderCost(); },
+    addCost:function(){ var id=Date.now(); this.data.cost.push({id:id,cat:'기타',cur:'EUR',amt:0,memo:''}); this._edit=id; this.save(); this.renderCost(); },
+    delCost:function(i){ this.data.cost.splice(i,1); this._edit=null; this.save(); this.renderCost(); },
 
     /* ── 책자 ── */
     renderBook:function(){ var self=this; var el=document.getElementById('ht-book');

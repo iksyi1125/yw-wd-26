@@ -126,7 +126,11 @@
   .gf-sp .l{ font-size:11px; font-weight:700; } .gf-sp.g .l{ color:var(--blue); } .gf-sp.r .l{ color:var(--red); }
   .gf-sp .n{ font-size:17px; font-weight:800; margin-top:2px; font-variant-numeric:tabular-nums; }
   .gf-sp .m{ font-size:11.5px; color:var(--sub); margin-top:1px; }
-  .gf-form{ display:grid; grid-template-columns:1fr 1fr; gap:8px; }
+  .gf-form{ display:grid; grid-template-columns:minmax(0,1fr) minmax(0,1fr); gap:8px; }
+  .gf-form > *{ min-width:0; }
+  .gf-form input[type=date]{ display:block; width:100%; min-width:0; max-width:100%; box-sizing:border-box;
+    -webkit-appearance:none; appearance:none; -webkit-min-logical-width:0; min-height:42px; line-height:1.3; text-align:left; }
+  .gf-form input[type=date]::-webkit-date-and-time-value{ text-align:left; }
   .gf-form .w{ grid-column:1/-1; }
   .gf-form select{ font-family:inherit; font-size:14px; padding:10px 12px; border:1px solid var(--line); border-radius:10px; background:#fff; color:var(--ink); width:100%; }
   .gf-seg{ display:flex; border:1px solid var(--line); border-radius:10px; overflow:hidden; }
@@ -3351,7 +3355,7 @@ var HM_ANCH={"prov":[["아비뇽",43.9493,4.8055,"l"],["아를",43.6768,4.631,"l
   }
   window.__setMode=setMode;
   window.__hardReload=function(){ location.replace(location.pathname + '?v=' + Date.now()); };
-  window.__BUILD='2026.11.05.1240';
+  window.__BUILD='2026.11.05.1300';
 })();
 </script>
 

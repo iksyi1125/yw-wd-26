@@ -118,6 +118,45 @@
   .form .btns{ display:flex; gap:8px; justify-content:flex-end; }
   .btn-ghost{ font-size:13px; padding:9px 16px; border-radius:10px; border:1px solid var(--line); background:#fff; color:var(--sub); }
   .btn-primary{ font-size:13px; font-weight:700; padding:9px 18px; border-radius:10px; border:none; background:var(--blue); color:#fff; }
+
+  /* 축의금 */
+  .gf-split{ display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-top:12px; }
+  .gf-sp{ border-radius:12px; padding:10px 12px; }
+  .gf-sp.g{ background:var(--blue-soft); } .gf-sp.r{ background:var(--red-soft); }
+  .gf-sp .l{ font-size:11px; font-weight:700; } .gf-sp.g .l{ color:var(--blue); } .gf-sp.r .l{ color:var(--red); }
+  .gf-sp .n{ font-size:17px; font-weight:800; margin-top:2px; font-variant-numeric:tabular-nums; }
+  .gf-sp .m{ font-size:11.5px; color:var(--sub); margin-top:1px; }
+  .gf-form{ display:grid; grid-template-columns:1fr 1fr; gap:8px; }
+  .gf-form .w{ grid-column:1/-1; }
+  .gf-form select{ font-family:inherit; font-size:14px; padding:10px 12px; border:1px solid var(--line); border-radius:10px; background:#fff; color:var(--ink); width:100%; }
+  .gf-seg{ display:flex; border:1px solid var(--line); border-radius:10px; overflow:hidden; }
+  .gf-seg button{ flex:1; font-size:13px; padding:9px 0; color:var(--sub); background:#fff; border:0; font-weight:600; }
+  .gf-seg button.on{ background:var(--ink); color:#fff; font-weight:700; }
+  .gf-btns{ grid-column:1/-1; display:flex; gap:8px; }
+  .gf-btns .btn-primary{ flex:1; padding:12px; font-size:14px; }
+  .gf-tools{ display:flex; flex-direction:column; gap:8px; }
+  .gf-flt{ display:flex; gap:6px; overflow-x:auto; padding-bottom:2px; scrollbar-width:none; }
+  .gf-flt::-webkit-scrollbar{ display:none; }
+  .gf-flt button{ flex-shrink:0; font-size:12px; padding:6px 12px; border-radius:999px; border:1px solid var(--line); background:#fff; color:var(--sub); font-weight:600; }
+  .gf-flt button.on{ background:var(--ink); color:#fff; border-color:var(--ink); }
+  .gf-row{ display:flex; align-items:center; gap:10px; background:var(--card); border:1px solid var(--line); border-radius:12px; padding:10px 12px; font-size:13px; }
+  .gf-row.editing{ border-color:var(--blue); }
+  .gf-side{ width:6px; height:30px; border-radius:3px; flex-shrink:0; }
+  .gf-side.g{ background:var(--blue); } .gf-side.r{ background:var(--red); }
+  .gf-nm{ flex:1; min-width:0; cursor:pointer; }
+  .gf-nm b{ display:block; font-size:14px; }
+  .gf-nm small{ color:var(--sub); font-size:11.5px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; display:block; }
+  .gf-amt{ font-weight:800; font-variant-numeric:tabular-nums; white-space:nowrap; }
+  .gf-thx{ width:24px; height:24px; border-radius:50%; border:1.5px solid var(--line); display:grid; place-items:center; font-size:11px; color:var(--faint); background:#fff; flex-shrink:0; padding:0; }
+  .gf-thx.on{ background:#4a7c59; border-color:#4a7c59; color:#fff; }
+  .gf-foot{ display:flex; gap:8px; }
+  .gf-foot button{ flex:1; font-size:12.5px; padding:9px 6px; border-radius:9px; border:1px solid var(--line); background:#fff; color:var(--sub); font-weight:600; }
+  .gf-foot button.on{ background:var(--ink); color:#fff; border-color:var(--ink); }
+  .gf-tbl{ width:100%; border-collapse:collapse; font-size:13px; }
+  .gf-tbl td{ padding:7px 4px; border-top:1px dashed var(--line); }
+  .gf-tbl td:last-child{ text-align:right; font-weight:700; font-variant-numeric:tabular-nums; white-space:nowrap; }
+  .gf-tbl tr:first-child td{ border-top:0; }
+  .gf-empty{ text-align:center; color:var(--faint); font-size:13px; padding:22px 0; }
   .add-opt{ font-size:14px; font-weight:600; padding:13px; border-radius:14px; border:1.5px dashed rgba(39,66,122,.4);
     background:#fff; color:var(--blue); width:100%; }
   .empty{ text-align:center; padding:36px 0; color:var(--faint); font-size:13px; }
@@ -406,8 +445,11 @@ let state = {
   weddingDate: "",
   events: [],
   categories: DEFAULT_NAMES.map((name,i)=>({ id:"c"+(i+1), name, budgetCap:null, options:[] })),
+  gifts: [],
 };
 let tab = "summary";
+let gfForm = null;      // {editingId, side}
+let gfFilter = "all", gfQuery = "", gfView = "list";
 let formState = null; // {catId, editingId}
 let saveTimer = null;
 
@@ -454,6 +496,7 @@ function render(){
   const main = document.getElementById("main");
   if (tab === "summary") main.innerHTML = summaryHTML();
   else if (tab === "schedule") main.innerHTML = scheduleHTML();
+  else if (tab === "gift") main.innerHTML = giftHTML();
   else {
     const c = state.categories.find(x=>x.id===tab);
     main.innerHTML = c ? categoryHTML(c) : summaryHTML();
@@ -475,6 +518,7 @@ function renderTabs(){
   const bar = document.getElementById("tabbar");
   let html = '<button class="tab'+(tab==="summary"?" active":"")+'" onclick="App.setTab(\'summary\')">Summary</button>';
   html += '<button class="tab'+(tab==="schedule"?" active":"")+'" onclick="App.setTab(\'schedule\')">일정</button>';
+  html += '<button class="tab'+(tab==="gift"?" active":"")+'" onclick="App.setTab(\'gift\')">축의금</button>';
   for (const c of state.categories){
     const hasD = c.options.some(o=>o.status==="decided");
     const hasP = c.options.some(o=>o.status==="considering"||o.status==="candidate");
@@ -702,6 +746,76 @@ function allEvents(){
   const evs = (state.events || []).slice();
   if (state.weddingDate) evs.push({ id:"__wed", date: state.weddingDate, time:"", title:"💒 예식일", memo:"", fixed:true });
   return evs.sort((a,b)=> a.date===b.date ? (a.time||"99:99").localeCompare(b.time||"99:99") : a.date.localeCompare(b.date));
+}
+
+/* ── 축의금 ── */
+function gfSum(list){ return list.reduce((s,g)=>s+(g.amt||0),0); }
+function gfTk(list){ return list.reduce((s,g)=>s+(g.tk||0),0); }
+function giftHTML(){
+  const all = state.gifts || [];
+  const g = all.filter(x=>x.side==="g"), b = all.filter(x=>x.side==="b");
+  let html = '<div class="grid">';
+  html += '<div class="card"><div class="label">축의금 합계 · '+all.length+'건</div>'
+    + '<div class="total">'+gfSum(all).toLocaleString()+'원</div>'
+    + '<div class="gf-split">'
+    + '<div class="gf-sp g"><div class="l">신랑측</div><div class="n">'+gfSum(g).toLocaleString()+'</div><div class="m">'+g.length+'건 · 식권 '+gfTk(g)+'</div></div>'
+    + '<div class="gf-sp r"><div class="l">신부측</div><div class="n">'+gfSum(b).toLocaleString()+'</div><div class="m">'+b.length+'건 · 식권 '+gfTk(b)+'</div></div>'
+    + '</div></div>';
+
+  const ed = gfForm?.editingId ? all.find(x=>x.id===gfForm.editingId) : null;
+  const side = gfForm?.side || ed?.side || "g";
+  const today = todayStr();
+  html += '<div class="card"><div class="label" style="margin-bottom:10px">'+(ed?'수정':'입력')+'</div><div class="gf-form">'
+    + '<input id="gf-name" placeholder="이름" value="'+esc(ed?.name||'')+'" />'
+    + '<input id="gf-rel" placeholder="관계 (회사·친구·친척)" value="'+esc(ed?.rel||'')+'" />'
+    + '<div class="gf-seg w"><button class="'+(side==="g"?"on":"")+'" onclick="App.gfSide(\'g\')">신랑측</button><button class="'+(side==="b"?"on":"")+'" onclick="App.gfSide(\'b\')">신부측</button></div>'
+    + '<input id="gf-amt" placeholder="금액 (원)" inputmode="numeric" style="text-align:right" value="'+(ed?.amt!=null?ed.amt.toLocaleString():'')+'" oninput="this.value=App.commas(this.value)" />'
+    + '<select id="gf-tk">'+[0,1,2,3,4,5].map(n=>'<option value="'+n+'"'+((ed?ed.tk:1)===n?' selected':'')+'>'+(n===0?'식권 0 (불참)':'식권 '+n)+'</option>').join('')+'</select>'
+    + '<input id="gf-date" type="date" value="'+esc(ed?.date||today)+'" />'
+    + '<select id="gf-how">'+['현금','계좌이체','화환 대신','기타'].map(h=>'<option'+((ed?.how||'현금')===h?' selected':'')+'>'+h+'</option>').join('')+'</select>'
+    + '<input id="gf-memo" class="w" placeholder="메모" value="'+esc(ed?.memo||'')+'" />'
+    + '<div class="gf-btns">'+(ed?'<button class="btn-ghost" onclick="App.gfCancel()">취소</button><button class="btn-ghost" style="color:var(--red)" onclick="App.gfDel(\''+ed.id+'\')">삭제</button>':'')
+    + '<button class="btn-primary" onclick="App.gfSave()">'+(ed?'저장':'추가')+'</button></div>'
+    + '</div></div>';
+
+  const FL = [["all","전체"],["g","신랑측"],["b","신부측"],["nothx","감사연락 안 함"],["big","10만↑"],["bank","계좌이체"]];
+  html += '<div class="gf-tools"><input id="gf-q" placeholder="🔍 이름·관계로 찾기" value="'+esc(gfQuery)+'" oninput="App.gfSearch(this.value)" />'
+    + '<div class="gf-flt">'+FL.map(f=>'<button class="'+(gfFilter===f[0]?'on':'')+'" onclick="App.gfFilter(\''+f[0]+'\')">'+f[1]+'</button>').join('')+'</div></div>';
+
+  let list = all.slice();
+  if (gfFilter==="g"||gfFilter==="b") list = list.filter(x=>x.side===gfFilter);
+  else if (gfFilter==="nothx") list = list.filter(x=>!x.thx);
+  else if (gfFilter==="big") list = list.filter(x=>(x.amt||0)>=100000);
+  else if (gfFilter==="bank") list = list.filter(x=>x.how==="계좌이체");
+  const q = gfQuery.trim().toLowerCase();
+  if (q) list = list.filter(x=>(x.name||'').toLowerCase().includes(q)||(x.rel||'').toLowerCase().includes(q));
+  list.sort((a,b)=>(b.ts||0)-(a.ts||0));
+
+  html += '<div class="gf-foot">'
+    + '<button class="'+(gfView==="list"?"on":"")+'" onclick="App.gfView(\'list\')">목록 '+list.length+'</button>'
+    + '<button class="'+(gfView==="rel"?"on":"")+'" onclick="App.gfView(\'rel\')">관계별</button>'
+    + '<button class="'+(gfView==="band"?"on":"")+'" onclick="App.gfView(\'band\')">금액대</button>'
+    + '<button onclick="App.gfCSV()">복사</button></div>';
+
+  if (gfView==="list"){
+    if (!list.length) html += '<div class="gf-empty">'+(all.length?'조건에 맞는 항목이 없어요':'아직 입력한 축의금이 없어요')+'</div>';
+    for (const x of list){
+      const sub = [x.rel, x.tk!=null?'식권 '+x.tk:null, x.how&&x.how!=='현금'?x.how:null, x.date, x.memo].filter(Boolean).join(' · ');
+      html += '<div class="gf-row'+(gfForm?.editingId===x.id?' editing':'')+'"><span class="gf-side '+(x.side==="b"?"r":"g")+'"></span>'
+        + '<div class="gf-nm" onclick="App.gfEdit(\''+x.id+'\')"><b>'+esc(x.name)+'</b><small>'+esc(sub)+'</small></div>'
+        + '<span class="gf-amt">'+(x.amt||0).toLocaleString()+'</span>'
+        + '<button class="gf-thx'+(x.thx?' on':'')+'" title="감사연락" onclick="App.gfThx(\''+x.id+'\')">'+(x.thx?'✓':'')+'</button></div>';
+    }
+  } else if (gfView==="rel"){
+    const m = {}; for (const x of list){ const k=(x.rel||'(미입력)').trim()||'(미입력)'; m[k]=m[k]||{n:0,s:0}; m[k].n++; m[k].s+=x.amt||0; }
+    const rows = Object.entries(m).sort((a,b)=>b[1].s-a[1].s);
+    html += '<div class="card"><table class="gf-tbl">'+(rows.length?rows.map(r=>'<tr><td>'+esc(r[0])+'</td><td>'+r[1].n+'건</td><td>'+r[1].s.toLocaleString()+'</td></tr>').join(''):'<tr><td class="gf-empty">없음</td></tr>')+'</table></div>';
+  } else {
+    const bands = [[0,30000,'3만 미만'],[30000,50000,'3만'],[50000,100000,'5만'],[100000,200000,'10만'],[200000,300000,'20만'],[300000,500000,'30만'],[500000,1e12,'50만 이상']];
+    html += '<div class="card"><table class="gf-tbl">'+bands.map(bd=>{ const xs=list.filter(x=>(x.amt||0)>=bd[0]&&(x.amt||0)<bd[1]); return xs.length?'<tr><td>'+bd[2]+'</td><td>'+xs.length+'건</td><td>'+gfSum(xs).toLocaleString()+'</td></tr>':''; }).join('')+'</table></div>';
+  }
+  html += '</div>';
+  return html;
 }
 
 function scheduleHTML(){
@@ -1130,6 +1244,46 @@ window.App = {
     this.closePhoto();
     persist(); render();
   },
+  /* 축의금 */
+  gfSide(s){ gfForm = gfForm || {}; gfForm.side = s; render(); },
+  gfSave(){
+    const name = document.getElementById("gf-name").value.trim();
+    const amt = parsePrice(document.getElementById("gf-amt").value);
+    if (!name){ toast("이름을 입력해 주세요"); return; }
+    if (amt==null){ toast("금액을 입력해 주세요"); return; }
+    const rec = { name, rel: document.getElementById("gf-rel").value.trim(), side: gfForm?.side || "g", amt,
+      tk: parseInt(document.getElementById("gf-tk").value,10)||0, date: document.getElementById("gf-date").value || todayStr(),
+      how: document.getElementById("gf-how").value, memo: document.getElementById("gf-memo").value.trim() };
+    state.gifts = state.gifts || [];
+    if (gfForm?.editingId){
+      const x = state.gifts.find(y=>y.id===gfForm.editingId);
+      if (x){ const keep = { id:x.id, ts:x.ts, thx:x.thx }; Object.assign(x, rec, keep); }
+      toast("수정했어요");
+    } else {
+      state.gifts.push(Object.assign({ id: uid(), ts: Date.now(), thx:false }, rec));
+      toast(name+" "+amt.toLocaleString()+"원 추가");
+    }
+    const side = rec.side; gfForm = { side };
+    if (pendingRemote){ const pr = pendingRemote; pendingRemote = null; const byId = {}; (pr.gifts||[]).forEach(g=>byId[g.id]=g); (state.gifts||[]).forEach(g=>byId[g.id]=g); pr.gifts = Object.values(byId); state = pr; }
+    persist(); render();
+    const n = document.getElementById("gf-name"); if (n) n.focus();
+  },
+  gfEdit(id){ const x=(state.gifts||[]).find(y=>y.id===id); if(!x) return; gfForm = { editingId:id, side:x.side }; render(); document.getElementById("gf-name")?.scrollIntoView({behavior:"smooth",block:"center"}); },
+  gfCancel(){ gfForm = null; if (pendingRemote){ state = pendingRemote; pendingRemote = null; } render(); },
+  gfDel(id){ const x=(state.gifts||[]).find(y=>y.id===id); if(!x) return;
+    if (!confirm("'"+x.name+" "+(x.amt||0).toLocaleString()+"원' 을 삭제할까요?")) return;
+    state.gifts = state.gifts.filter(y=>y.id!==id); gfForm = null; persist(); render(); },
+  gfThx(id){ const x=(state.gifts||[]).find(y=>y.id===id); if(!x) return; x.thx = !x.thx; persist(); render(); },
+  gfFilter(f){ gfFilter = f; render(); },
+  gfView(v){ gfView = v; render(); },
+  gfSearch(q){ gfQuery = q; const main=document.getElementById("main"); const pos=document.getElementById("gf-q").selectionStart; render(); const el=document.getElementById("gf-q"); if(el){ el.focus(); try{ el.setSelectionRange(pos,pos); }catch(e){} } },
+  gfCSV(){
+    const rows = [["이름","관계","측","금액","식권","날짜","방법","메모","감사연락"]].concat((state.gifts||[]).map(x=>[x.name,x.rel||"",x.side==="b"?"신부측":"신랑측",x.amt||0,x.tk||0,x.date||"",x.how||"",x.memo||"",x.thx?"O":""]));
+    const txt = rows.map(r=>r.map(v=>'"'+String(v).replace(/"/g,'""')+'"').join(",")).join("\n");
+    const done = ()=>toast("CSV를 복사했어요 — 스프레드시트에 붙여넣기");
+    if (navigator.clipboard?.writeText){ navigator.clipboard.writeText(txt).then(done).catch(()=>{ this._csvFallback(txt); }); } else this._csvFallback(txt);
+  },
+  _csvFallback(txt){ const ta=document.createElement("textarea"); ta.value=txt; document.body.appendChild(ta); ta.select(); try{ document.execCommand("copy"); toast("CSV를 복사했어요"); }catch(e){ toast("복사가 안 돼요 — 길게 눌러 복사해 주세요"); } document.body.removeChild(ta); },
   addCategory(){
     const name = prompt("추가할 항목 이름을 입력하세요");
     if (!name || !name.trim()) return;
@@ -1154,6 +1308,7 @@ async function startApp(){
       const parsed = JSON.parse(raw);
       if (parsed && Array.isArray(parsed.categories)){
         parsed.events = Array.isArray(parsed.events) ? parsed.events : [];
+        parsed.gifts = Array.isArray(parsed.gifts) ? parsed.gifts : [];
         // 마이그레이션: 가전 항목 보장
         if (!parsed.categories.some(c=>c.name==="가전")){
           const idx = parsed.categories.findIndex(c=>c.name==="집 인테리어");
@@ -1174,7 +1329,8 @@ async function startApp(){
         const parsed = JSON.parse(raw);
         if (parsed && Array.isArray(parsed.categories)){
           parsed.events = Array.isArray(parsed.events) ? parsed.events : [];
-          if (formState || evFormState){ pendingRemote = parsed; }   // 입력 중이면 폼 닫힌 뒤 반영
+          parsed.gifts = Array.isArray(parsed.gifts) ? parsed.gifts : [];
+          if (formState || evFormState || (tab==="gift" && document.activeElement && /^gf-/.test(document.activeElement.id||""))){ pendingRemote = parsed; }   // 입력 중이면 폼 닫힌 뒤 반영
           else { state = parsed; render(); }
         }
       } catch(e){}
@@ -2601,6 +2757,38 @@ var HM_ANCH={"prov":[["아비뇽",43.9493,4.8055,"l"],["아를",43.6768,4.631,"l
   #modeHoneymoon .foot-stay .foot-val{ flex:1; font-weight:600; color:#5c5140; }
   #modeHoneymoon .foot-val[contenteditable]:empty::before{ content:attr(data-ph); color:#c3bcae; font-weight:400; }
 
+  /* 준비 */
+  #modeHoneymoon #ht-prep{ max-width:760px; margin-left:auto; margin-right:auto; }
+  #modeHoneymoon .pp-prog{ background:#2b2622; color:#fff; border-radius:16px; padding:15px 17px; margin-bottom:13px; }
+  #modeHoneymoon .pp-prog .n{ font-size:26px; font-weight:800; font-variant-numeric:tabular-nums; }
+  #modeHoneymoon .pp-prog .n small{ font-size:14px; font-weight:600; color:#c9bda6; }
+  #modeHoneymoon .pp-prog .l{ font-size:12px; color:#c9bda6; margin-top:2px; }
+  #modeHoneymoon .pp-bar{ height:6px; background:rgba(255,255,255,.15); border-radius:99px; margin-top:11px; overflow:hidden; }
+  #modeHoneymoon .pp-bar i{ display:block; height:100%; background:#b08d4f; border-radius:99px; transition:width .3s; }
+  #modeHoneymoon .pp-due{ background:#f6efe2; border-radius:12px; padding:11px 14px; margin-bottom:13px; font-size:13px; }
+  #modeHoneymoon .pp-due b{ color:#b5424e; display:block; margin-bottom:4px; }
+  #modeHoneymoon .pp-due .r{ display:flex; gap:9px; align-items:baseline; padding:3px 0; color:#5c5140; }
+  #modeHoneymoon .pp-due .d{ color:#b08d4f; font-weight:700; font-size:11.5px; width:44px; flex-shrink:0; font-variant-numeric:tabular-nums; }
+  #modeHoneymoon .pp-sec{ background:#fff; border:1px solid #e8e1d6; border-radius:16px; padding:0 15px; margin-bottom:11px; }
+  #modeHoneymoon .pp-sh{ display:flex; align-items:center; gap:9px; padding:13px 0; user-select:none; }
+  #modeHoneymoon .pp-sh .t{ font-weight:800; font-size:15px; flex:1; min-width:0; }
+  #modeHoneymoon .pp-sh .c{ font-size:12px; color:#8a8177; font-variant-numeric:tabular-nums; white-space:nowrap; }
+  #modeHoneymoon .pp-sh .v{ color:#c3bcae; font-size:12px; transition:.2s; cursor:pointer; padding:4px 6px; }
+  #modeHoneymoon .pp-sec.open .pp-sh .v{ transform:rotate(180deg); }
+  #modeHoneymoon .pp-body{ display:none; padding-bottom:10px; }
+  #modeHoneymoon .pp-sec.open .pp-body{ display:block; }
+  #modeHoneymoon .pp-it{ display:flex; align-items:flex-start; gap:10px; padding:8px 0; border-top:1px dashed #efe9de; font-size:14px; line-height:1.55; color:#463f37; }
+  #modeHoneymoon .pp-cb{ width:21px; height:21px; border:1.5px solid #d8cfbf; border-radius:6px; flex-shrink:0; margin-top:2px; display:grid; place-items:center; cursor:pointer; background:#fff; font-size:12px; color:#fff; }
+  #modeHoneymoon .pp-it.done .pp-cb{ background:#4a7c59; border-color:#4a7c59; }
+  #modeHoneymoon .pp-it.done .pp-tx{ color:#a89e8d; text-decoration:line-through; }
+  #modeHoneymoon .pp-it .pp-tx{ flex:1; min-width:0; }
+  #modeHoneymoon .pp-it .pp-mm{ display:block; color:#8a8177; font-size:12px; margin-top:2px; }
+  #modeHoneymoon .pp-it .pp-mm:empty::before{ content:'메모'; color:#d0c8b8; }
+  #modeHoneymoon .pp-it.done .pp-mm{ text-decoration:none; }
+  #modeHoneymoon .pp-add{ margin:6px 0 4px; font-size:12.5px; padding:5px 10px; }
+  #modeHoneymoon .pp-foot{ display:flex; gap:8px; margin-top:4px; }
+  #modeHoneymoon .pp-foot .hm-add{ flex:1; padding:11px; }
+
   /* 비용 */
   #modeHoneymoon .hm-fxbar{ background:#f3ede0; border-radius:12px; padding:12px 15px; font-size:12.5px; color:#6f675e; margin-bottom:16px; display:flex; justify-content:space-between; align-items:center; gap:10px; flex-wrap:wrap; }
   #modeHoneymoon .hm-fxbar b{ color:#2b2622; }
@@ -2698,10 +2886,12 @@ var HM_ANCH={"prov":[["아비뇽",43.9493,4.8055,"l"],["아를",43.6768,4.631,"l
       <button data-ht="sched" class="on" onclick="HM.tab('sched')">🗓 일정</button>
       <button data-ht="cost" onclick="HM.tab('cost')">💰 비용</button>
       <button data-ht="book" onclick="HM.tab('book')">📖 책자</button>
+      <button data-ht="prep" onclick="HM.tab('prep')">✅ 준비</button>
     </nav>
     <section class="hm-sec on" id="ht-sched"></section>
     <section class="hm-sec" id="ht-cost"></section>
     <section class="hm-sec" id="ht-book"></section>
+    <section class="hm-sec" id="ht-prep"></section>
   </div>
 </div>
 
@@ -2723,6 +2913,7 @@ var HM_ANCH={"prov":[["아비뇽",43.9493,4.8055,"l"],["아를",43.6768,4.631,"l
   function normSched(arr){ if(!Array.isArray(arr))return arr; arr.forEach(function(d){
     if(!d.meals||typeof d.meals!=='object'){ d.meals={b:'',l:'',d:(d.meal||'')}; }
     if(d.meals.b==null)d.meals.b=''; if(d.meals.l==null)d.meals.l=''; if(d.meals.d==null)d.meals.d='';
+    if(Array.isArray(d.items))d.items=d.items.map(function(t){ return typeof t==='string'?t.replace('Door 47D, Stop 8 · 예약 불필요','Door 47D, Stop 9 · 예약 불필요 · 20분 간격'):t; });
     /* 옛 형식: 제목 끝의 (요일)을 날짜로 이동 */
     if(d.date && d.date.indexOf('(')===-1){
       var mm=(d.t||'').match(/\(([일월화수목금토][일월화수목금토·]*)\)\s*$/);
@@ -2731,7 +2922,7 @@ var HM_ANCH={"prov":[["아비뇽",43.9493,4.8055,"l"],["아를",43.6768,4.631,"l
   }); return arr; }
 
   var SCHED_VER=13;
-  var SEED_SCHED=[{"d": "D1", "date": "11/15(일)", "t": "인천 → 파리 → 오를리 1박", "stay": "Mercure Paris Orly Airport (1박·조식)", "meals": {"b": "", "l": "기내식", "d": "기내식 / 호텔"}, "items": ["OZ501 인천(T2) 12:05 → 파리 CDG(T1) 18:35 · 위탁 2PC", "CDG → 오를리: RER B → 앙토니 Orlyval 또는 택시 (약 1시간)", "✅ 공항→호텔 무료 셔틀 확인됨 — Door 47D, Stop 8 · 예약 불필요", "대안: Orly 4에서 트램 T7 → Hélène Boucher 하차 (3정거장·10분, 호텔 건너편 100m)", "Mercure Paris Orly 체크인 14:00~자정 · 12 Av. Jacqueline Auriol", "다음날 국내선 09:00 — 짐 정리 후 일찍 취침"]},
+  var SEED_SCHED=[{"d": "D1", "date": "11/15(일)", "t": "인천 → 파리 → 오를리 1박", "stay": "Mercure Paris Orly Airport (1박·조식)", "meals": {"b": "", "l": "기내식", "d": "기내식 / 호텔"}, "items": ["OZ501 인천(T2) 12:05 → 파리 CDG(T1) 18:35 · 위탁 2PC", "CDG → 오를리: RER B → 앙토니 Orlyval 또는 택시 (약 1시간)", "✅ 공항→호텔 무료 셔틀 확인됨 — Door 47D, Stop 9 · 예약 불필요 · 20분 간격", "대안: Orly 4에서 트램 T7 → Hélène Boucher 하차 (3정거장·10분, 호텔 건너편 100m)", "Mercure Paris Orly 체크인 14:00~자정 · 12 Av. Jacqueline Auriol", "다음날 국내선 09:00 — 짐 정리 후 일찍 취침"]},
     {"d": "D2", "date": "11/16(월)", "t": "오를리 → 니스 · 적응일", "stay": "Mercure Nice Promenade des Anglais (1/3박)", "meals": {"b": "호텔 조식", "l": "", "d": ""}, "items": ["호텔 조식 후 이른 체크아웃 — 셔틀로 공항 (07:00 전후 탑승 권장)", "Transavia TO 7132 오를리 09:00 → 니스 10:30 (GDN4MJ · 좌석 2E/2F · 위탁 30kg×2)", "니스 공항 → 시내 트램 2호선 약 30분", "Mercure Nice 체크인 14:00~ · 2 Rue Halévy · Privilege 바다뷰", "쿠르 살레야 — 월요일은 골동품 시장", "성의 언덕 전망대 · 해질녘 프롬나드 데 장글레"]},
     {"d": "D3", "date": "11/17(화)", "t": "동쪽 코스 — 빌프랑슈·에즈·모나코·망통", "stay": "Mercure Nice (2/3박)", "meals": {"b": "호텔 조식", "l": "", "d": "모나코 브라세리 (굴·해산물)"}, "items": ["기차 15분 빌프랑슈쉬르메르 — 항구 아침 산책", "버스 82/112 에즈 빌리지 · 이국정원 (11월 ~16:30, 15시 전 입장)", "에즈 → 모나코 (몬테카를로 카지노 광장 · 왕궁 · 해양박물관)", "기차 10분 망통 — 구시가 · 바스티옹 · 레몬 파스텔 거리", "망통 → 니스 기차 35분 · 저녁"]},
     {"d": "D4", "date": "11/18(수)", "t": "서쪽 코스 — 생폴드방스·앙티브", "stay": "Mercure Nice (3/3박)", "meals": {"b": "호텔 조식", "l": "생폴드방스", "d": "니스 구시가"}, "items": ["버스 400 또는 기차+버스 생폴드방스 (약 1시간)", "성벽 마을 산책 · 매그 재단 (Fondation Maeght)", "앙티브 — 피카소 미술관 · 구시가 (기차 30분)", "옵션: 빌라 에프뤼시 드 로스차일드 (겨울 개관시간 확인) 또는 칸 라 크루아제트", "니스 복귀 · ⚠ 내일 08:00 렌터카 픽업 — 짐 정리 · 국제운전면허증·실물 신용카드 확인"]},
@@ -2756,13 +2947,99 @@ var HM_ANCH={"prov":[["아비뇽",43.9493,4.8055,"l"],["아를",43.6768,4.631,"l
   var CURS=['EUR','USD','KRW'];
   var FX_FALLBACK={EUR:1593, USD:1360, date:'2026-09-20(기본값)'};
 
+  /* ── 준비물 시드 (PREP_VER 올리면 빠진 항목만 추가, 체크·수정은 유지) ── */
+  var PREP_VER=1;
+  var PREP_DUE=[
+    {iso:'2026-11-14',d:'11/14',t:'숙소 무료취소 1차 마감 — 오를리·아비뇽 (23:59 CET)'},
+    {iso:'2026-11-15',d:'11/15',t:'니스 Mercure 무료취소 마감 (23:59 CET, 이후 첫 1박)'},
+    {iso:'2026-11-16',d:'11/16',t:'렌터카 바우처 수신 확인 (72h 전) · TGV 무료환불 마감'},
+    {iso:'2026-11-17',d:'11/17',t:'렌터카 무료취소 마감 08:00 · 마르세유 숙소 23:59'},
+    {iso:'2026-11-19',d:'11/19',t:'와인투어 무료취소 14:00 · 안시 Rivage 18:00'},
+    {iso:'2026-11-21',d:'11/21',t:'9Confidentiel 무료취소 00:00 (=11/20 밤)'},
+    {iso:'2026-11-24',d:'11/24',t:'Pullman 무료취소 23:59'}];
+  var SEED_PREP=[
+    {t:'📄 서류',items:[
+      {t:'여권 — 11/27 기준 잔여 유효기간 3개월 이상',m:'두 사람 모두 확인'},
+      {t:'국제운전면허증 (IDP)',m:'실물 한국 면허증과 함께 제시 · 디지털 면허 불가'},
+      {t:'실물 신용카드 — 운전자 본인 명의 Visa/Master',m:'렌터카 보증금 한도 넉넉히 · 체크카드·토스 등 불가'},
+      {t:'예약 확인서 폰 저장 + 종이 1부',m:'OZ · Transavia GDN4MJ · TGV JGWW9E 2장 · 렌터카 B41255249 · 호텔 7곳 · 와인투어 · 크루즈'},
+      {t:'여행자보험 가입 → 증권번호 저장',m:'의료·휴대품·항공지연'},
+      {t:'혼인관계증명서 영문본 1부 (선택)',m:'허니문 혜택 요청용'},
+      {t:'EES 입출국시스템 — 첫 입국 시 지문·안면 등록',m:'CDG에서 평소보다 30~60분 더 걸림, 별도 준비 없음'}]},
+    {t:'📶 통신',items:[
+      {t:'Ubigi 앱 → 프랑스 25GB/30일 (€19) 2인 구매·설치',m:'활성화는 CDG 도착 후'},
+      {t:'Viber Out 또는 Yolla 설치 → $5 충전 → 테스트 통화',m:'식당·호텔 전화용 (스카이프 종료됨)'},
+      {t:'한국 유심은 그대로, 데이터 로밍 OFF',m:'은행 OTP 문자 수신용'}]},
+    {t:'📱 앱',items:[
+      {t:'SNCF Connect — TGV 티켓·파업 알림'},
+      {t:'Transavia — 탑승권·지연 알림'},
+      {t:'G7 택시 + Uber',m:'CDG 첫날 이동'},
+      {t:'Google Maps 오프라인 지도 — 니스·프로방스·알프스·파리'},
+      {t:'Citymapper 또는 Bonjour RATP (파리 지하철)'},
+      {t:'Waze (렌터카 구간 과속카메라)'},
+      {t:'청실홍실 홈화면 추가 · 프랑스 13일 링크 와이프 폰에'},
+      {t:'외교부 해외안전여행 앱 (시위 공지)'}]},
+    {t:'💶 돈',items:[
+      {t:'해외결제 수수료 없는 카드 2장 (트래블월렛/로그) 유로 충전'},
+      {t:'현금 유로 €200~300',m:'시장 노점·톨게이트 백업'},
+      {t:'카드사 해외사용 알림 · 분실 긴급번호 저장'},
+      {t:'현장결제 숙소 합계 약 €3,680 + 렌터카 보증금 한도 확인'}]},
+    {t:'🧳 짐 · 장비',items:[
+      {t:'캐리어 2개 — Transavia 위탁 30kg/인 · TGV 90×70×50cm'},
+      {t:'TGV용 캐리어 이름표 (의무)',m:'이름·전화'},
+      {t:'캐리어 자물쇠 (TSA)'},
+      {t:'멀티어댑터 (C/E형) + 멀티탭 + 보조배터리'},
+      {t:'차량용 폰 거치대 + 시거잭 충전기'},
+      {t:'우산 · 방수 재킷',m:'11월 파리·안시 비 잦음'},
+      {t:'피크닉용 와인오프너·작은 칼 → 위탁수하물에',m:'기내 반입 불가 · 또는 그랑 에피스리에서 구매'},
+      {t:'접이식 장바구니 (피크닉 장보기)'},
+      {t:'상비약 — 감기·소화제·진통제·밴드·멀미약(베르동 산길)'},
+      {t:'선글라스 (니스 해안도로 저녁 역광)'}]},
+    {t:'🧥 옷',items:[
+      {t:'니스·마르세유 15~18℃/9~11℃ — 가을 겉옷·바람막이'},
+      {t:'베르동·고르드 10~14℃/3~6℃ — 경량패딩'},
+      {t:'안시·샤모니 4~8℃/-2~2℃ 눈 가능 — 패딩·장갑·모자·방수신발'},
+      {t:'파리 7~10℃/3~5℃ 비 — 코트·우산'},
+      {t:'운동화 1 + 저녁용 신발 1',m:'La Fontaine de Mars · 크루즈'},
+      {t:'수영복',m:'Rivage 스파 · 샤모니 QC Terme 온천'},
+      {t:'크루즈 복장 스마트캐주얼',m:'운동화·반바지 불가'}]},
+    {t:'🚗 렌터카',items:[
+      {t:'픽업 시 스노우체인 또는 스노우삭스 요청',m:'Loi Montagne 11/1~3/31 오트사부아 의무 · 벌금 €135'},
+      {t:'차량 인수 시 360도 사진·영상 (흠집)'},
+      {t:'자차 면책금 확인 → 카드사 렌터카 보험 또는 현장 풀커버'},
+      {t:'톨게이트 카드 레인 "CB" · 현금 레인 동전'},
+      {t:'연료 종류 확인 — 가솔린 SP95-E10 / 디젤 Gazole 혼동 주의'},
+      {t:'Route des Crêtes(베르동) 11월 개통 여부 확인',m:'verdon-tourisme'},
+      {t:'안시역 일요일 08:00 반납 가능 여부 바우처 확인'}]},
+    {t:'📞 예약 · 확인',items:[
+      {t:'Chez Madie (마르세유 11/19 19:30) 예약 + 부야베스 사전주문'},
+      {t:'La Fontaine de Mars (파리 11/25 저녁) 예약',m:'+33 1 47 05 46 44'},
+      {t:'Chez Paul (11/24 저녁) · Vins des Pyrénées (11/23) 예약'},
+      {t:'오랑주리·오르세 (11/25) 온라인 시간지정 예매'},
+      {t:'Don Juan II 취소 조건 확인',m:'booking.donjuan2.fr'},
+      {t:'아시아나 좌석 지정 · 기내식'},
+      {t:'11/8~9 프랑스 시위·파업 현황 재점검'},
+      {t:'11/12 니스 날씨 → 에즈 정원(16:30 폐장) 요일 조정'},
+      {t:'9Confidentiel 늦은 체크인 문의 — 24시간 리셉션 확인됨',d:true},
+      {t:'Firebase 규칙 수정',d:true}]}];
+  function normPrep(arr){ if(!Array.isArray(arr))arr=[]; arr.forEach(function(sec,i){
+    if(sec.id==null)sec.id=Date.now()+i; if(!Array.isArray(sec.items))sec.items=[];
+    sec.items.forEach(function(it,j){ if(it.id==null)it.id=Date.now()+i*100+j; if(it.m==null)it.m=''; it.d=!!it.d; }); }); return arr; }
+  function mergePrep(arr){ arr=normPrep(arr); var added=false;
+    SEED_PREP.forEach(function(ss){ var sec=null; for(var i=0;i<arr.length;i++)if((arr[i].t||'').trim()===ss.t.trim()){sec=arr[i];break;}
+      if(!sec){ sec={id:Date.now()+arr.length,t:ss.t,items:[]}; arr.push(sec); added=true; }
+      var have={}; sec.items.forEach(function(it){ have[(it.t||'').trim()]=1; });
+      ss.items.forEach(function(si){ if(!have[si.t.trim()]){ sec.items.push({id:Date.now()+Math.floor(Math.random()*1e6),t:si.t,m:si.m||'',d:!!si.d}); added=true; } }); });
+    return {prep:normPrep(arr),added:added}; }
+
   /* ── Firebase 동기화 (결혼준비 앱과 같은 방 재사용) ── */
   var room=null; try{ room=localStorage.getItem('wp-room'); }catch(e){}
   var FB=(typeof firebase!=='undefined' && !!room);
-  var fbSched=null, fbCost=null, fbBook=null;
+  var fbSched=null, fbCost=null, fbBook=null, fbPrep=null;
   if(FB){ try{ fbSched=firebase.database().ref('honeymoon/'+room+'/sched');
                fbCost =firebase.database().ref('honeymoon/'+room+'/cost');
-               fbBook =firebase.database().ref('honeymoon/'+room+'/book'); }catch(e){ FB=false; } }
+               fbBook =firebase.database().ref('honeymoon/'+room+'/book');
+               fbPrep =firebase.database().ref('honeymoon/'+room+'/prep'); }catch(e){ FB=false; } }
   var BTYPES=['관광지','숙소','식당'];
   function normBook(arr){ if(!Array.isArray(arr))return arr; arr.forEach(function(p,i){
     if(p.id==null)p.id=Date.now()+i; if(!Array.isArray(p.hl))p.hl=p.hl?[p.hl]:[]; if(!Array.isArray(p.info))p.info=p.info?[p.info]:[];
@@ -2774,7 +3051,7 @@ var HM_ANCH={"prov":[["아비뇽",43.9493,4.8055,"l"],["아를",43.6768,4.631,"l
   function regionLabel(r){ for(var i=0;i<REGIONS.length;i++)if(REGIONS[i][0]===r)return REGIONS[i][1]; return r; }
   function syncMsg(t,c){ var b=document.getElementById('hm-sync'); if(b){ b.textContent=t; b.style.color=c||'#a89e8d'; } }
 
-  var HM={ data:{}, fx:null, filt:'all', tfilt:'all', cur:'sched', _ls:null, _lc:null, _lb:null, _pend:false, _edit:null,
+  var HM={ data:{}, fx:null, filt:'all', tfilt:'all', cur:'sched', _ls:null, _lc:null, _lb:null, _lp:null, _pend:false, _edit:null, _open:null,
     load:function(){
       var sv=LS.get('hm2026-schedver',0);
       if(sv<SCHED_VER){ this.data.sched=normSched(JSON.parse(JSON.stringify(SEED_SCHED)));
@@ -2786,7 +3063,9 @@ var HM_ANCH={"prov":[["아비뇽",43.9493,4.8055,"l"],["아를",43.6768,4.631,"l
       var _c=mergeCost(this.data.cost); this.data.cost=_c.cost; if(_c.added)LS.set('hm2026-cost',this.data.cost);
       this.data.book=normBook(LS.get('hm2026-book',null)||(typeof PB!=='undefined'?JSON.parse(JSON.stringify(PB)):[]));
       var _m=this.mergeSeed(this.data.book); this.data.book=_m.book; if(_m.added)LS.set('hm2026-book',this.data.book);
-      this.fx=LS.get('hm2026-fx',null)||FX_FALLBACK; },
+      this.fx=LS.get('hm2026-fx',null)||FX_FALLBACK;
+      var _p=mergePrep(LS.get('hm2026-prep',null)||[]); this.data.prep=_p.prep;
+      if(_p.added||LS.get('hm2026-prepver',0)<PREP_VER){ LS.set('hm2026-prep',this.data.prep); LS.set('hm2026-prepver',PREP_VER); } },
     mergeSeed:function(book){
       var added=false;
       if(typeof PB_DROP!=='undefined'){ for(var di=book.length-1;di>=0;di--){ if(PB_DROP.indexOf((book[di].t||'').trim())>=0){ book.splice(di,1); added=true; } } }
@@ -2796,17 +3075,18 @@ var HM_ANCH={"prov":[["아비뇽",43.9493,4.8055,"l"],["아를",43.6768,4.631,"l
       if(typeof PB_INFO!=='undefined'){ book.forEach(function(p){ var d=PB_INFO[(p.t||'').trim()]; if(d){ ['web','addr','tel'].forEach(function(k){ if(!p[k]&&d[k]){ p[k]=d[k]; added=true; } }); } }); }
       if(typeof PB_FIX!=='undefined'){ book.forEach(function(p){ var f=PB_FIX[(p.t||'').trim()]; if(f){ for(var k in f){ if(JSON.stringify(p[k])!==JSON.stringify(f[k])){ p[k]=JSON.parse(JSON.stringify(f[k])); added=true; } } } }); }
       return {book:book, added:added}; },
-    save:function(){ LS.set('hm2026-sched',this.data.sched); LS.set('hm2026-cost',this.data.cost); LS.set('hm2026-book',this.data.book);
+    save:function(){ LS.set('hm2026-sched',this.data.sched); LS.set('hm2026-cost',this.data.cost); LS.set('hm2026-book',this.data.book); LS.set('hm2026-prep',this.data.prep);
       var warn=function(){ syncMsg('⚠ 동기화 권한 없음 — Firebase 규칙 확인 필요','#b5424e'); };
       if(FB){ try{
         this._ls=JSON.stringify(this.data.sched); fbSched.set(this._ls).catch(warn);
         this._lc=JSON.stringify(this.data.cost);  fbCost.set(this._lc).catch(warn);
         this._lb=JSON.stringify(this.data.book);  fbBook.set(this._lb).catch(warn);
+        this._lp=JSON.stringify(this.data.prep);  fbPrep.set(this._lp).catch(warn);
       }catch(e){} } },
     isEditing:function(){ var a=document.activeElement; var host=document.getElementById('modeHoneymoon');
       return a && host && host.contains(a) && (a.isContentEditable||a.tagName==='INPUT'||a.tagName==='SELECT'); },
     applyRemote:function(){ if(this.isEditing()){ this._pend=true; return; }
-      if(this.cur==='sched')this.renderSched(); else if(this.cur==='cost')this.renderCost(); else if(this.cur==='book')this.renderBook(); },
+      if(this.cur==='sched')this.renderSched(); else if(this.cur==='cost')this.renderCost(); else if(this.cur==='book')this.renderBook(); else if(this.cur==='prep')this.renderPrep(); },
     connectFB:function(){ var self=this;
       if(!FB){ syncMsg('이 기기에만 저장 (동기화 꺼짐 — PIN 입력 후 새로고침)'); return; }
       var onErr=function(){ syncMsg('⚠ 동기화 권한 없음 — Firebase 규칙 확인 필요','#b5424e'); };
@@ -2821,6 +3101,9 @@ var HM_ANCH={"prov":[["아비뇽",43.9493,4.8055,"l"],["아를",43.6768,4.631,"l
       fbBook.on('value',function(snap){ var v=snap.val();
         if(v==null){ self._lb=JSON.stringify(self.data.book); fbBook.set(self._lb).catch(onErr); return; }
         if(v===self._lb)return; try{ var p=JSON.parse(v); if(Array.isArray(p)){ var m=self.mergeSeed(normBook(p)); self.data.book=m.book; LS.set('hm2026-book',self.data.book); if(m.added){ self._lb=JSON.stringify(self.data.book); fbBook.set(self._lb).catch(onErr); } self.applyRemote(); } }catch(e){} }, onErr);
+      fbPrep.on('value',function(snap){ var v=snap.val();
+        if(v==null){ self._lp=JSON.stringify(self.data.prep); fbPrep.set(self._lp).catch(onErr); return; }
+        if(v===self._lp)return; try{ var p=JSON.parse(v); if(Array.isArray(p)){ var mp=mergePrep(p); self.data.prep=mp.prep; LS.set('hm2026-prep',self.data.prep); if(mp.added){ self._lp=JSON.stringify(self.data.prep); fbPrep.set(self._lp).catch(onErr); } self.applyRemote(); } }catch(e){} }, onErr);
       document.getElementById('modeHoneymoon').addEventListener('focusout',function(){
         setTimeout(function(){ if(self._pend && !self.isEditing()){ self._pend=false; self.applyRemote(); } },160); });
       syncMsg('● 실시간 동기화 켜짐 (양쪽 기기 공유)','#4a7c59'); },
@@ -2828,7 +3111,7 @@ var HM_ANCH={"prov":[["아비뇽",43.9493,4.8055,"l"],["아를",43.6768,4.631,"l
       s.querySelectorAll('.hm-subtabs button').forEach(function(b){ b.classList.toggle('on', b.dataset.ht===t); });
       s.querySelectorAll('.hm-sec').forEach(function(x){ x.classList.remove('on'); });
       document.getElementById('ht-'+t).classList.add('on');
-      if(t==='sched')this.renderSched(); if(t==='cost')this.renderCost(); if(t==='book')this.renderBook();
+      if(t==='sched')this.renderSched(); if(t==='cost')this.renderCost(); if(t==='book')this.renderBook(); if(t==='prep')this.renderPrep();
       window.scrollTo(0,0); },
 
     /* ── 일정 ── */
@@ -3018,6 +3301,40 @@ var HM_ANCH={"prov":[["아비뇽",43.9493,4.8055,"l"],["아를",43.6768,4.631,"l
     delBook:function(i){ if(confirm('이 장소를 삭제할까요?')){ this.data.book.splice(i,1); this.save(); this.closeCard(); this.renderBook(); } },
     closeCard:function(){ document.getElementById('hm-overlay').classList.remove('on'); document.body.style.overflow=''; },
 
+    /* ── 준비 ── */
+    renderPrep:function(){ var self=this; var el=document.getElementById('ht-prep'); var prep=this.data.prep;
+      if(this._open==null){ this._open={}; if(prep[0])this._open[prep[0].id]=true; }
+      var tot=0,done=0; prep.forEach(function(s){ s.items.forEach(function(it){ tot++; if(it.d)done++; }); });
+      var pct=tot?Math.round(done/tot*100):0;
+      var today=new Date(); var dep=new Date('2026-11-15T00:00:00'); var dd=Math.ceil((dep-new Date(today.getFullYear(),today.getMonth(),today.getDate()))/86400000);
+      var ddl=dd>0?'출국까지 D-'+dd:(dd===0?'출국 당일':'여행 중');
+      var h='<div class="pp-prog"><div class="n">'+done+' <small>/ '+tot+'</small></div><div class="l">'+ddl+' · 챙긴 것 '+pct+'%</div><div class="pp-bar"><i style="width:'+pct+'%"></i></div></div>';
+      var iso=today.toISOString().slice(0,10); var due=PREP_DUE.filter(function(x){return x.iso>=iso;}).slice(0,4);
+      if(due.length){ h+='<div class="pp-due"><b>마감 있는 할 일</b>'+due.map(function(x){return '<div class="r"><span class="d">'+x.d+'</span><span>'+esc(x.t)+'</span></div>';}).join('')+'</div>'; }
+      prep.forEach(function(sec,si){ var sd=0; sec.items.forEach(function(it){ if(it.d)sd++; });
+        h+='<div class="pp-sec'+(self._open[sec.id]?' open':'')+'"><div class="pp-sh">'+
+           '<span class="t" contenteditable onblur="HM.prepEditSec('+si+',this)">'+esc(sec.t)+'</span>'+
+           '<span class="c">'+sd+'/'+sec.items.length+'</span>'+
+           '<button class="hm-x" onclick="HM.prepDelSec('+si+')" title="섹션 삭제">✕</button>'+
+           '<span class="v" onclick="HM.prepToggle('+sec.id+')">▼</span></div><div class="pp-body">';
+        sec.items.forEach(function(it,ii){
+          h+='<div class="pp-it'+(it.d?' done':'')+'"><span class="pp-cb" onclick="HM.prepCheck('+si+','+ii+')">'+(it.d?'✓':'')+'</span>'+
+             '<span class="pp-tx"><span contenteditable onblur="HM.prepEdit('+si+','+ii+',\'t\',this)">'+esc(it.t)+'</span>'+
+             '<span class="pp-mm" contenteditable onblur="HM.prepEdit('+si+','+ii+',\'m\',this)">'+esc(it.m||'')+'</span></span>'+
+             '<button class="hm-x" onclick="HM.prepDel('+si+','+ii+')">✕</button></div>'; });
+        h+='<button class="hm-add pp-add" onclick="HM.prepAdd('+si+')">＋ 항목 추가</button></div></div>'; });
+      h+='<div class="pp-foot"><button class="hm-add" onclick="HM.prepAddSec()">＋ 섹션 추가</button></div>';
+      el.innerHTML=h; },
+    prepToggle:function(id){ this._open[id]=!this._open[id]; this.renderPrep(); },
+    prepCheck:function(si,ii){ var it=this.data.prep[si].items[ii]; it.d=!it.d; this.save(); this.renderPrep(); },
+    prepEdit:function(si,ii,k,e){ var v=e.textContent.trim(); if(this.data.prep[si].items[ii][k]===v)return; this.data.prep[si].items[ii][k]=v; this.save(); },
+    prepEditSec:function(si,e){ var v=e.textContent.trim(); if(!v||this.data.prep[si].t===v)return; this.data.prep[si].t=v; this.save(); },
+    prepAdd:function(si){ var sec=this.data.prep[si]; sec.items.push({id:Date.now(),t:'새 항목',m:'',d:false}); this._open[sec.id]=true; this.save(); this.renderPrep();
+      var el=document.getElementById('ht-prep'); var secs=el.querySelectorAll('.pp-sec'); var last=secs[si]&&secs[si].querySelectorAll('.pp-it .pp-tx > span:first-child')[sec.items.length-1]; if(last){ last.focus(); try{ document.execCommand('selectAll',false,null); }catch(e){} } },
+    prepDel:function(si,ii){ this.data.prep[si].items.splice(ii,1); this.save(); this.renderPrep(); },
+    prepAddSec:function(){ var id=Date.now(); this.data.prep.push({id:id,t:'새 섹션',items:[]}); this._open[id]=true; this.save(); this.renderPrep(); },
+    prepDelSec:function(si){ var sec=this.data.prep[si]; if(!confirm("'"+sec.t+"' 섹션과 항목 "+sec.items.length+"개를 삭제할까요?"))return; this.data.prep.splice(si,1); this.save(); this.renderPrep(); },
+
     init:function(){ this.load(); this.renderSched(); this.fetchFX(); this.connectFB(); }
   };
   window.HM=HM;
@@ -3036,7 +3353,7 @@ var HM_ANCH={"prov":[["아비뇽",43.9493,4.8055,"l"],["아를",43.6768,4.631,"l
   }
   window.__setMode=setMode;
   window.__hardReload=function(){ location.replace(location.pathname + '?v=' + Date.now()); };
-  window.__BUILD='2026.09.21.0900';
+  window.__BUILD='2026.11.05.1200';
 })();
 </script>
 

@@ -3203,12 +3203,19 @@ var HM_ANCH={"prov":[["아비뇽",43.9493,4.8055,"l"],["아를",43.6768,4.631,"l
   function normPrep(arr){ if(!Array.isArray(arr))arr=[]; arr.forEach(function(sec,i){
     if(sec.id==null)sec.id=Date.now()+i; if(!Array.isArray(sec.items))sec.items=[];
     sec.items.forEach(function(it,j){ if(it.id==null)it.id=Date.now()+i*100+j; if(it.m==null)it.m=''; it.d=!!it.d; }); }); return arr; }
+  function prepKey(t){ return String(t||'').replace(/[^0-9A-Za-z\u3131-\u318E\uAC00-\uD7A3]/g,'').toLowerCase(); }
   function mergePrep(arr){ arr=normPrep(arr); var added=false;
+    /* 같은 이름 섹션(이모지·공백 차이 포함)이 둘 이상이면 하나로 합침 */
+    var seen={}; for(var q=0;q<arr.length;q++){ var kq=prepKey(arr[q].t); if(!kq)continue;
+      if(seen[kq]!=null){ var keep=arr[seen[kq]], hv={}; keep.items.forEach(function(it){ hv[prepKey(it.t)]=1; });
+        arr[q].items.forEach(function(it){ if(!hv[prepKey(it.t)]){ keep.items.push(it); hv[prepKey(it.t)]=1; } });
+        arr.splice(q,1); q--; added=true; } else seen[kq]=q; }
+    arr.forEach(function(sec){ var hv={}; for(var k=0;k<sec.items.length;k++){ var ik=prepKey(sec.items[k].t); if(ik&&hv[ik]){ if(sec.items[k].d)hv[ik].d=true; sec.items.splice(k,1); k--; added=true; } else if(ik) hv[ik]=sec.items[k]; } });
     arr.forEach(function(sec){ for(var k=sec.items.length-1;k>=0;k--){ if(PREP_DROP.indexOf((sec.items[k].t||'').trim())>=0){ sec.items.splice(k,1); added=true; } } });
-    SEED_PREP.forEach(function(ss){ var sec=null; for(var i=0;i<arr.length;i++)if((arr[i].t||'').trim()===ss.t.trim()){sec=arr[i];break;}
+    SEED_PREP.forEach(function(ss){ var sec=null; for(var i=0;i<arr.length;i++)if(prepKey(arr[i].t)===prepKey(ss.t)){sec=arr[i];break;}
       if(!sec){ sec={id:Date.now()+arr.length,t:ss.t,items:[]}; arr.push(sec); added=true; }
-      var have={}; sec.items.forEach(function(it){ have[(it.t||'').trim()]=1; });
-      ss.items.forEach(function(si){ if(!have[si.t.trim()]){ sec.items.push({id:Date.now()+Math.floor(Math.random()*1e6),t:si.t,m:si.m||'',d:!!si.d}); added=true; } }); });
+      var have={}; sec.items.forEach(function(it){ have[prepKey(it.t)]=1; });
+      ss.items.forEach(function(si){ if(!have[prepKey(si.t)]){ sec.items.push({id:Date.now()+Math.floor(Math.random()*1e6),t:si.t,m:si.m||'',d:!!si.d}); added=true; } }); });
     return {prep:normPrep(arr),added:added}; }
 
   /* ── Firebase 동기화 (결혼준비 앱과 같은 방 재사용) ── */
@@ -3532,7 +3539,7 @@ var HM_ANCH={"prov":[["아비뇽",43.9493,4.8055,"l"],["아를",43.6768,4.631,"l
   }
   window.__setMode=setMode;
   window.__hardReload=function(){ location.replace(location.pathname + '?v=' + Date.now()); };
-  window.__BUILD='2026.11.08.2200';
+  window.__BUILD='2026.11.08.2300';
 })();
 </script>
 

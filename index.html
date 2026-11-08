@@ -3096,7 +3096,7 @@ var HM_ANCH={"prov":[["아비뇽",43.9493,4.8055,"l"],["아를",43.6768,4.631,"l
   function normSched(arr){ if(!Array.isArray(arr))return arr; arr.forEach(function(d){
     if(!d.meals||typeof d.meals!=='object'){ d.meals={b:'',l:'',d:(d.meal||'')}; }
     if(d.meals.b==null)d.meals.b=''; if(d.meals.l==null)d.meals.l=''; if(d.meals.d==null)d.meals.d='';
-    if(Array.isArray(d.items))d.items=d.items.map(function(t){ return typeof t==='string'?t.replace('Door 47D, Stop 8 · 예약 불필요','Door 47D, Stop 9 · 예약 불필요 · 20분 간격').replace('OZ501 인천(T2) 12:05 → 파리 CDG(T1) 18:35 · 위탁 2PC','OZ501 인천(T2) 12:05 → 파리 CDG(T1) 18:35 · 비즈니스 둘 다 (신영 EX2OA9 마일리지 · 혜원 E3ICRX 승급) · 위탁 신영 2PC / 혜원 티켓상 1PC — 체크인 때 확인').replace('Transavia TO 7132 오를리 09:00 → 니스 10:30 (GDN4MJ · 좌석 2E/2F · 위탁 30kg×2)','Transavia TO 7132 오를리 09:00 → 니스 10:30 (GDN4MJ · 좌석 2E/2F · Max) · 위탁 1인 30kg(합산 60kg, 같이 체크인) · 기내 1인 10kg (55×40×25 + 40×30×20) — 이 구간이 여행 전체 짐 기준').replace('18:25 OZ502 CDG(T1) → 인천 11/28 14:40 도착','18:25 OZ502 CDG(T1) → 인천 11/28 14:40 도착 · 비즈니스 · 위탁 신영 32kg×2 / 혜원 최소 23kg×1 — 쇼핑 짐은 신영 두 번째 가방으로'):t; });
+    if(Array.isArray(d.items))d.items=d.items.map(function(t){ return typeof t==='string'?t.replace('Door 47D, Stop 8 · 예약 불필요','Door 47D, Stop 9 · 예약 불필요 · 20분 간격').replace('OZ501 인천(T2) 12:05 → 파리 CDG(T1) 18:35 · 위탁 2PC','OZ501 인천(T2) 12:05 → 파리 CDG(T1) 18:35 · 비즈니스 둘 다 (신영 EX2OA9 마일리지 · 혜원 E3ICRX 승급) · 위탁 1인 32kg×2').replace('OZ501 인천(T2) 12:05 → 파리 CDG(T1) 18:35 · 비즈니스 둘 다 (신영 EX2OA9 마일리지 · 혜원 E3ICRX 승급) · 위탁 신영 2PC / 혜원 티켓상 1PC — 체크인 때 확인','OZ501 인천(T2) 12:05 → 파리 CDG(T1) 18:35 · 비즈니스 둘 다 (신영 EX2OA9 마일리지 · 혜원 E3ICRX 승급) · 위탁 1인 32kg×2').replace('Transavia TO 7132 오를리 09:00 → 니스 10:30 (GDN4MJ · 좌석 2E/2F · 위탁 30kg×2)','Transavia TO 7132 오를리 09:00 → 니스 10:30 (GDN4MJ · 좌석 2E/2F · Max) · 위탁 1인 30kg(합산 60kg, 같이 체크인) · 기내 1인 10kg (55×40×25 + 40×30×20) — 이 구간이 여행 전체 짐 기준').replace('18:25 OZ502 CDG(T1) → 인천 11/28 14:40 도착','18:25 OZ502 CDG(T1) → 인천 11/28 14:40 도착 · 비즈니스 · 위탁 1인 32kg×2 — 쇼핑 짐 여유 있음').replace('18:25 OZ502 CDG(T1) → 인천 11/28 14:40 도착 · 비즈니스 · 위탁 신영 32kg×2 / 혜원 최소 23kg×1 — 쇼핑 짐은 신영 두 번째 가방으로','18:25 OZ502 CDG(T1) → 인천 11/28 14:40 도착 · 비즈니스 · 위탁 1인 32kg×2 — 쇼핑 짐 여유 있음'):t; });
     /* 옛 형식: 제목 끝의 (요일)을 날짜로 이동 */
     if(d.date && d.date.indexOf('(')===-1){
       var mm=(d.t||'').match(/\(([일월화수목금토][일월화수목금토·]*)\)\s*$/);
@@ -3119,8 +3119,8 @@ var HM_ANCH={"prov":[["아비뇽",43.9493,4.8055,"l"],["아를",43.6768,4.631,"l
   var FX_FALLBACK={EUR:1593, USD:1360, date:'2026-09-20(기본값)'};
 
   /* ── 준비물 시드 (PREP_VER 올리면 빠진 항목만 추가, 체크·수정은 유지) ── */
-  var PREP_VER=3;
-  var PREP_DROP=['오랑주리·오르세 (11/25) 온라인 시간지정 예매','Chez Paul (11/24 저녁) · Vins des Pyrénées (11/23) 예약','캐리어 2개 — Transavia 위탁 30kg/인 · TGV 90×70×50cm'];
+  var PREP_VER=4;
+  var PREP_DROP=['오랑주리·오르세 (11/25) 온라인 시간지정 예매','Chez Paul (11/24 저녁) · Vins des Pyrénées (11/23) 예약','캐리어 2개 — Transavia 위탁 30kg/인 · TGV 90×70×50cm','아시아나 체크인 때 혜원 수하물 확인','귀국편(OZ502)은 짐 늘어도 됨'];
   var PREP_DUE=[
     {iso:'2026-11-14',d:'11/14',t:'숙소 무료취소 1차 마감 — 오를리·아비뇽 (23:59 CET)'},
     {iso:'2026-11-15',d:'11/15',t:'니스 Mercure 무료취소 마감 (23:59 CET, 이후 첫 1박)'},
@@ -3160,8 +3160,7 @@ var HM_ANCH={"prov":[["아비뇽",43.9493,4.8055,"l"],["아를",43.6768,4.631,"l
       {t:'위탁 캐리어 1인 1개, 1인당 30kg 이하로 싸기',m:'기준은 Transavia(11/16) — 1인 30kg · 1개 최대 32kg · 삼변합 165cm. 둘이 같은 예약이라 합산 60kg (체크인 같이)'},
       {t:'기내 가방 1인 10kg 이하 (캐리어+백팩 합산)',m:'Transavia 기내 캐리어 55×40×25 + 개인가방 40×30×20, 합쳐 10kg — 아시아나 비즈니스는 2개+소지품이라 여유'},
       {t:'TGV 캐리어 크기 90×70×50cm 이하 · 1인 2개+손가방 1',m:'이름표 의무'},
-      {t:'아시아나 체크인 때 혜원 수하물 확인',m:'티켓 표기 1PC(이코노미 구매분) — 비즈니스 승급분 2PC×32kg 적용 여부. 신영은 2PC×32kg'},
-      {t:'귀국편(OZ502)은 짐 늘어도 됨',m:'Transavia 제약 없음 — 신영 32kg×2, 혜원 최소 23kg×1. 쇼핑은 신영 두 번째 가방으로'},
+      {t:'귀국편(OZ502) 위탁 1인 32kg×2 — 쇼핑 짐 여유',m:'아시아나 비즈니스 둘 다 1인 2PC×32kg (Transavia 제약 없음). 두 번째 가방은 접이식 보스턴백 챙겨가기'},
       {t:'TGV용 캐리어 이름표 (의무)',m:'이름·전화'},
       {t:'캐리어 자물쇠 (TSA)'},
       {t:'멀티어댑터 (C/E형) + 멀티탭 + 보조배터리'},
@@ -3532,7 +3531,7 @@ var HM_ANCH={"prov":[["아비뇽",43.9493,4.8055,"l"],["아를",43.6768,4.631,"l
   }
   window.__setMode=setMode;
   window.__hardReload=function(){ location.replace(location.pathname + '?v=' + Date.now()); };
-  window.__BUILD='2026.11.08.1130';
+  window.__BUILD='2026.11.08.2015';
 })();
 </script>
 

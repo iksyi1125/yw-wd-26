@@ -2,9 +2,13 @@
 <html lang="ko">
 <head>
 <meta charset="UTF-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, viewport-fit=cover" />
 <title>우리 결혼 준비 — 청실홍실</title>
 <style>
+  /* 입력 시 자동 확대 방지 · 좌우 폭 고정 */
+  html{ -webkit-text-size-adjust:100%; text-size-adjust:100%; touch-action:manipulation; }
+  html,body{ max-width:100%; overflow-x:hidden; }
+
   @import url('https://cdnjs.cloudflare.com/ajax/libs/pretendard/1.3.9/variable/pretendardvariable.min.css');
   @import url('https://fonts.googleapis.com/css2?family=Gowun+Batang:wght@400;700&display=swap');
 
@@ -3540,7 +3544,7 @@ var HM_ANCH={"prov":[["아비뇽",43.9493,4.8055,"l"],["아를",43.6768,4.631,"l
   }
   window.__setMode=setMode;
   window.__hardReload=function(){ location.replace(location.pathname + '?v=' + Date.now()); };
-  window.__BUILD='2026.11.09.0010';
+  window.__BUILD='2026.11.09.0930';
 })();
 </script>
 

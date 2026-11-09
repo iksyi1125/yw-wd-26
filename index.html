@@ -3100,7 +3100,7 @@ var HM_ANCH={"prov":[["아비뇽",43.9493,4.8055,"l"],["아를",43.6768,4.631,"l
   function normSched(arr){ if(!Array.isArray(arr))return arr; arr.forEach(function(d){
     if(!d.meals||typeof d.meals!=='object'){ d.meals={b:'',l:'',d:(d.meal||'')}; }
     if(d.meals.b==null)d.meals.b=''; if(d.meals.l==null)d.meals.l=''; if(d.meals.d==null)d.meals.d='';
-    if(Array.isArray(d.items))d.items=d.items.map(function(t){ return typeof t==='string'?t.replace('Door 47D, Stop 8 · 예약 불필요','Door 47D, Stop 9 · 예약 불필요 · 20분 간격').replace('14:00 ★ 오랑주리 (예매 14:00 · 화 휴관)','14:00 ★ 오랑주리 ✅ 예매 완료 (14:00 시간지정 · 2장 · 티켓 Invoice 폴더 PDF)').replace('OZ501 인천(T2) 12:05 → 파리 CDG(T1) 18:35 · 위탁 2PC','OZ501 인천(T2) 12:05 → 파리 CDG(T1) 18:35 · 비즈니스 둘 다 (신영 EX2OA9 마일리지 · 혜원 E3ICRX 승급) · 위탁 1인 32kg×2').replace('OZ501 인천(T2) 12:05 → 파리 CDG(T1) 18:35 · 비즈니스 둘 다 (신영 EX2OA9 마일리지 · 혜원 E3ICRX 승급) · 위탁 신영 2PC / 혜원 티켓상 1PC — 체크인 때 확인','OZ501 인천(T2) 12:05 → 파리 CDG(T1) 18:35 · 비즈니스 둘 다 (신영 EX2OA9 마일리지 · 혜원 E3ICRX 승급) · 위탁 1인 32kg×2').replace('Transavia TO 7132 오를리 09:00 → 니스 10:30 (GDN4MJ · 좌석 2E/2F · 위탁 30kg×2)','Transavia TO 7132 오를리 09:00 → 니스 10:30 (GDN4MJ · 좌석 2E/2F · Max) · 위탁 1인 30kg(합산 60kg, 같이 체크인) · 기내 1인 10kg (55×40×25 + 40×30×20) — 이 구간이 여행 전체 짐 기준').replace('18:25 OZ502 CDG(T1) → 인천 11/28 14:40 도착','18:25 OZ502 CDG(T1) → 인천 11/28 14:40 도착 · 비즈니스 · 위탁 1인 32kg×2 — 쇼핑 짐 여유 있음').replace('18:25 OZ502 CDG(T1) → 인천 11/28 14:40 도착 · 비즈니스 · 위탁 신영 32kg×2 / 혜원 최소 23kg×1 — 쇼핑 짐은 신영 두 번째 가방으로','18:25 OZ502 CDG(T1) → 인천 11/28 14:40 도착 · 비즈니스 · 위탁 1인 32kg×2 — 쇼핑 짐 여유 있음'):t; });
+    if(Array.isArray(d.items))d.items=d.items.map(function(t){ return typeof t==='string'?t.replace('Door 47D, Stop 8 · 예약 불필요','Door 47D, Stop 9 · 예약 불필요 · 20분 간격').replace('호텔 조식 후 이른 체크아웃 — 셔틀로 공항 (07:00 전후 탑승 권장)','06:00 호텔 조식(포함) → 06:50 셔틀 → 오를리 · 위탁 맡기기(마감 08:20) → 패스트트랙 → ★ Transavia 라운지 (Orly 2C · 니스행 게이트 바로 위층 · 06:00~22:00 · Max 운임 무료) → 탑승 시작 전 게이트 (우선탑승)').replace('14:00 ★ 오랑주리 (예매 14:00 · 화 휴관)','14:00 ★ 오랑주리 ✅ 예매 완료 (14:00 시간지정 · 2장 · 티켓 Invoice 폴더 PDF)').replace('OZ501 인천(T2) 12:05 → 파리 CDG(T1) 18:35 · 위탁 2PC','OZ501 인천(T2) 12:05 → 파리 CDG(T1) 18:35 · 비즈니스 둘 다 (신영 EX2OA9 마일리지 · 혜원 E3ICRX 승급) · 위탁 1인 32kg×2').replace('OZ501 인천(T2) 12:05 → 파리 CDG(T1) 18:35 · 비즈니스 둘 다 (신영 EX2OA9 마일리지 · 혜원 E3ICRX 승급) · 위탁 신영 2PC / 혜원 티켓상 1PC — 체크인 때 확인','OZ501 인천(T2) 12:05 → 파리 CDG(T1) 18:35 · 비즈니스 둘 다 (신영 EX2OA9 마일리지 · 혜원 E3ICRX 승급) · 위탁 1인 32kg×2').replace('Transavia TO 7132 오를리 09:00 → 니스 10:30 (GDN4MJ · 좌석 2E/2F · 위탁 30kg×2)','Transavia TO 7132 오를리 09:00 → 니스 10:30 (GDN4MJ · 좌석 2E/2F · Max) · 위탁 1인 30kg(합산 60kg, 같이 체크인) · 기내 1인 10kg (55×40×25 + 40×30×20) — 이 구간이 여행 전체 짐 기준').replace('18:25 OZ502 CDG(T1) → 인천 11/28 14:40 도착','18:25 OZ502 CDG(T1) → 인천 11/28 14:40 도착 · 비즈니스 · 위탁 1인 32kg×2 — 쇼핑 짐 여유 있음').replace('18:25 OZ502 CDG(T1) → 인천 11/28 14:40 도착 · 비즈니스 · 위탁 신영 32kg×2 / 혜원 최소 23kg×1 — 쇼핑 짐은 신영 두 번째 가방으로','18:25 OZ502 CDG(T1) → 인천 11/28 14:40 도착 · 비즈니스 · 위탁 1인 32kg×2 — 쇼핑 짐 여유 있음'):t; });
     /* 옛 형식: 제목 끝의 (요일)을 날짜로 이동 */
     if(d.date && d.date.indexOf('(')===-1){
       var mm=(d.t||'').match(/\(([일월화수목금토][일월화수목금토·]*)\)\s*$/);
@@ -3544,7 +3544,7 @@ var HM_ANCH={"prov":[["아비뇽",43.9493,4.8055,"l"],["아를",43.6768,4.631,"l
   }
   window.__setMode=setMode;
   window.__hardReload=function(){ location.replace(location.pathname + '?v=' + Date.now()); };
-  window.__BUILD='2026.11.09.1300';
+  window.__BUILD='2026.11.09.1500';
 })();
 </script>
 

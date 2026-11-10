@@ -8923,7 +8923,7 @@ var HM_ANCH={"prov":[["아비뇽",43.9493,4.8055,"l"],["아를",43.6768,4.631,"l
                fbBook =firebase.database().ref('honeymoon/'+room+'/book');
                fbPrep =firebase.database().ref('honeymoon/'+room+'/prep'); }catch(e){ FB=false; } }
   var BTYPES=['관광지','숙소','식당'];
-  var RSUBS=['브런치','브라세리','고급','카페','기타'];
+  var RSUBS=['브런치','브라세리','해산물','고급','카페','기타'];
   var RKEYS=['sub','g','gn','price','hours','open','st','menu','menuUrl','menuImg'];
   function normBook(arr){ if(!Array.isArray(arr))return arr; arr.forEach(function(p,i){
     if(p.id==null)p.id=Date.now()+i; if(!Array.isArray(p.hl))p.hl=p.hl?[p.hl]:[]; if(!Array.isArray(p.info))p.info=p.info?[p.info]:[];
@@ -9260,7 +9260,7 @@ var HM_ANCH={"prov":[["아비뇽",43.9493,4.8055,"l"],["아를",43.6768,4.631,"l
   }
   window.__setMode=setMode;
   window.__hardReload=function(){ location.replace(location.pathname + '?v=' + Date.now()); };
-  window.__BUILD='2026.11.10.0200';
+  window.__BUILD='2026.11.10.1100';
 })();
 </script>
 

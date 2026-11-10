@@ -9595,7 +9595,7 @@ var HM_F13="<!doctype html><html lang=\"ko\"><head><meta charset=\"utf-8\"><meta
   var FX_FALLBACK={EUR:1593, USD:1360, date:'2026-09-20(기본값)'};
 
   /* ── 준비물 시드 (PREP_VER 올리면 빠진 항목만 추가, 체크·수정은 유지) ── */
-  var PREP_VER=8;
+  var PREP_VER=9;
   var PREP_DROP=['오랑주리·오르세 (11/25) 온라인 시간지정 예매','Chez Paul (11/24 저녁) · Vins des Pyrénées (11/23) 예약','캐리어 2개 — Transavia 위탁 30kg/인 · TGV 90×70×50cm','아시아나 체크인 때 혜원 수하물 확인','귀국편(OZ502)은 짐 늘어도 됨','Ubigi 앱 → 프랑스 25GB/30일 (€19) 2인 구매·설치','Viber Out 또는 Yolla 설치 → $5 충전 → 테스트 통화','여행자보험 가입 → 증권번호 저장','픽업 시 스노우체인 또는 스노우삭스 요청','자차 면책금 확인 → 카드사 렌터카 보험 또는 현장 풀커버','안시역 일요일 08:00 반납 가능 여부 바우처 확인','★ 오랑주리 11/25 14:00 예매 (€12.50)','★ 오페라 가르니에 11/24 10:30 예매 (현장판매 없음 · 비EU €25)','★ 오르세 11/26 09:30 예매'];
   var PREP_DUE=[
     {iso:'2026-11-14',d:'11/14',t:'숙소 무료취소 1차 마감 — 오를리·아비뇽 (23:59 CET)'},
@@ -9634,8 +9634,8 @@ var HM_F13="<!doctype html><html lang=\"ko\"><head><meta charset=\"utf-8\"><meta
       {t:'카드사 해외사용 알림 · 분실 긴급번호 저장'},
       {t:'현장결제 숙소 합계 약 €3,680 + 렌터카 보증금 한도 확인'}]},
     {t:'🧳 짐 · 장비',items:[
-      {t:'위탁 캐리어 1인 1개, 1인당 30kg 이하로 싸기',m:'기준은 Transavia(11/16) — 1인 30kg · 1개 최대 32kg · 삼변합 165cm. 둘이 같은 예약이라 합산 60kg (체크인 같이)'},
-      {t:'기내 가방 1인 10kg 이하 (캐리어+백팩 합산)',m:'Transavia 기내 캐리어 55×40×25 + 개인가방 40×30×20, 합쳐 10kg — 아시아나 비즈니스는 2개+소지품이라 여유'},
+      {t:'위탁 캐리어 1인 1개, 1인당 30kg 이하로 싸기',m:'기준은 Transavia(11/16) — 1인 30kg · 최대 5개로 나눠도 됨 · 1개 최대 30kg · 삼변합 165cm (11/10 안내 메일). 둘이 같은 예약이라 합산 60kg (체크인 같이)',f:1},
+      {t:'기내 가방 1인 10kg 이하 (캐리어+백팩 합산)',m:'Transavia 기내 캐리어 55×40×25(선반) + 개인가방 40×30×20(앞좌석 밑) · 바퀴·손잡이 포함 · 합쳐 10kg (11/10 안내 메일) — 아시아나 비즈니스는 2개+소지품이라 여유',f:1},
       {t:'TGV 캐리어 크기 90×70×50cm 이하 · 1인 2개+손가방 1',m:'이름표 의무'},
       {t:'귀국편(OZ502) 위탁 1인 32kg×2 — 쇼핑 짐 여유',m:'아시아나 비즈니스 둘 다 1인 2PC×32kg (Transavia 제약 없음). 두 번째 가방은 접이식 보스턴백 챙겨가기'},
       {t:'TGV용 캐리어 이름표 (의무)',m:'이름·전화'},
@@ -9691,8 +9691,8 @@ var HM_F13="<!doctype html><html lang=\"ko\"><head><meta charset=\"utf-8\"><meta
     arr.forEach(function(sec){ for(var k=sec.items.length-1;k>=0;k--){ if(PREP_DROP.indexOf((sec.items[k].t||'').trim())>=0){ sec.items.splice(k,1); added=true; } } });
     SEED_PREP.forEach(function(ss){ var sec=null; for(var i=0;i<arr.length;i++)if(prepKey(arr[i].t)===prepKey(ss.t)){sec=arr[i];break;}
       if(!sec){ sec={id:Date.now()+arr.length,t:ss.t,items:[]}; arr.push(sec); added=true; }
-      var have={}; sec.items.forEach(function(it){ have[prepKey(it.t)]=1; });
-      ss.items.forEach(function(si){ if(!have[prepKey(si.t)]){ sec.items.push({id:Date.now()+Math.floor(Math.random()*1e6),t:si.t,m:si.m||'',d:!!si.d}); added=true; } }); });
+      var have={}; sec.items.forEach(function(it){ have[prepKey(it.t)]=it; });
+      ss.items.forEach(function(si){ var ex=have[prepKey(si.t)]; if(!ex){ sec.items.push({id:Date.now()+Math.floor(Math.random()*1e6),t:si.t,m:si.m||'',d:!!si.d}); added=true; } else if(si.f&&ex.m!==(si.m||'')){ ex.m=si.m||''; added=true; } }); });
     return {prep:normPrep(arr),added:added}; }
 
   /* ── Firebase 동기화 (결혼준비 앱과 같은 방 재사용) ── */
@@ -10077,7 +10077,7 @@ var HM_F13="<!doctype html><html lang=\"ko\"><head><meta charset=\"utf-8\"><meta
   }
   window.__setMode=setMode;
   window.__hardReload=function(){ location.replace(location.pathname + '?v=' + Date.now()); };
-  window.__BUILD='2026.11.10.2200';
+  window.__BUILD='2026.11.10.2230';
 })();
 </script>
 

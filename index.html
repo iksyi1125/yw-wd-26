@@ -9407,6 +9407,13 @@ var HM_F13="<!doctype html><html lang=\"ko\"><head><meta charset=\"utf-8\"><meta
   .hm-seg button{ border:0; background:transparent; font-family:inherit; font-size:12.5px; font-weight:700; color:#6f675e; padding:7px 16px; border-radius:999px; cursor:pointer; white-space:nowrap; }
   .hm-seg button.on{ background:#2b2622; color:#fff; }
   #modeHoneymoon .hm-mapbtn{ border:0; background:transparent; cursor:pointer; font-size:14px; padding:0 2px; flex-shrink:0; opacity:.75; }
+  .hm-topbar{ position:relative; display:flex; align-items:center; justify-content:center; margin:0 0 12px; min-height:40px; }
+  .hm-topbar .hm-seg{ margin:0; }
+  .hm-edbtn{ position:absolute; right:0; top:50%; transform:translateY(-50%); border:1px solid #e8e1d6; background:#fff; color:#6f675e; font-family:inherit; font-size:12.5px; font-weight:700; padding:8px 12px; border-radius:999px; cursor:pointer; white-space:nowrap; }
+  .hm-edbtn.on{ background:#b08d4f; border-color:#b08d4f; color:#fff; }
+  #ht-sched.editing [contenteditable]{ background:#faf6ec; }
+  #hm-top{ position:fixed; right:14px; bottom:calc(18px + env(safe-area-inset-bottom,0px)); z-index:45; width:44px; height:44px; border-radius:50%; border:0; background:#2b2622; color:#fff; font-size:19px; font-weight:700; line-height:1; cursor:pointer; box-shadow:0 4px 14px rgba(30,24,16,.28); opacity:0; visibility:hidden; transform:translateY(8px); transition:opacity .2s, transform .2s, visibility .2s; -webkit-tap-highlight-color:transparent; }
+  #hm-top.on{ opacity:.92; visibility:visible; transform:none; }
   #hm-f13{ position:fixed; inset:0; z-index:130; background:#0B1119; display:none; flex-direction:column; }
   #hm-f13.on{ display:flex; }
   #hm-f13 .bar{ flex:0 0 auto; padding:calc(8px + env(safe-area-inset-top,0px)) 12px 8px; background:#f6f1e7; border-bottom:1px solid #e8e1d6; }
@@ -9486,6 +9493,15 @@ var HM_F13="<!doctype html><html lang=\"ko\"><head><meta charset=\"utf-8\"><meta
 </div>
 
 <div id="hm-f13"><div class="bar"><div class="hm-seg"><button onclick="HM.closeMap()">📋 목록</button><button class="on">🗺 지도</button></div></div><iframe id="hm-f13-fr" title="프랑스 13일 지도"></iframe></div>
+
+<button id="hm-top" type="button" aria-label="맨 위로" title="맨 위로">↑</button>
+<script>
+(function(){ var b=document.getElementById('hm-top'); if(!b)return; var tick=false;
+  function upd(){ tick=false; b.classList.toggle('on',(window.pageYOffset||document.documentElement.scrollTop||0)>350); }
+  window.addEventListener('scroll',function(){ if(!tick){ tick=true; (window.requestAnimationFrame||setTimeout)(upd); } },{passive:true});
+  b.addEventListener('click',function(){ try{ window.scrollTo({top:0,behavior:'smooth'}); }catch(e){ window.scrollTo(0,0); } });
+  upd(); })();
+</script>
 
 <div id="hm-overlay" onclick="if(event.target===this)HM.closeCard()">
   <div class="sheet">
@@ -9713,7 +9729,7 @@ var HM_F13="<!doctype html><html lang=\"ko\"><head><meta charset=\"utf-8\"><meta
       document.getElementById('modeHoneymoon').addEventListener('focusout',function(){
         setTimeout(function(){ if(self._pend && !self.isEditing()){ self._pend=false; self.applyRemote(); } },160); });
       syncMsg('● 실시간 동기화 켜짐 (양쪽 기기 공유)','#4a7c59'); },
-    tab:function(t){ this.cur=t; var s=document.getElementById('modeHoneymoon');
+    tab:function(t){ this.cur=t; this._schedEd=false; var s=document.getElementById('modeHoneymoon');
       s.querySelectorAll('.hm-subtabs button').forEach(function(b){ b.classList.toggle('on', b.dataset.ht===t); });
       s.querySelectorAll('.hm-sec').forEach(function(x){ x.classList.remove('on'); });
       document.getElementById('ht-'+t).classList.add('on');
@@ -9722,34 +9738,39 @@ var HM_F13="<!doctype html><html lang=\"ko\"><head><meta charset=\"utf-8\"><meta
 
     /* ── 일정 ── */
     renderSched:function(){ var self=this; var el=document.getElementById('ht-sched');
-      var h='<div class="hm-seg"><button class="on">📋 목록</button><button onclick="HM.openMap()">🗺 지도</button></div>'+
-        '<div style="display:flex;align-items:center;justify-content:space-between;gap:8px;font-size:11px;color:#a89e8d;margin:0 2px 10px">'+
-        '<span>일정 v'+SCHED_VER+' · 앱 '+(window.__BUILD||'?')+'</span>'+
-        '<button class="hm-add" style="padding:5px 10px;font-size:11px;width:auto" onclick="HM.resetSched()">최신 일정 다시 불러오기</button></div>';
+      var ed=!!this._schedEd; el.classList.toggle('editing',ed);
+      var ce=function(fn){ return ed?' contenteditable onblur="HM.'+fn+'"':''; };
+      var h='<div class="hm-topbar"><div class="hm-seg"><button class="on">📋 목록</button><button onclick="HM.openMap()">🗺 지도</button></div>'+
+        '<button class="hm-edbtn'+(ed?' on':'')+'" onclick="HM.toggleSchedEdit()">'+(ed?'✓ 완료':'✎ 편집')+'</button></div>'+
+        '<div style="display:flex;align-items:center;justify-content:space-between;gap:8px;font-size:11px;color:#a89e8d;margin:0 2px 10px;min-height:26px">'+
+        '<span>'+(ed?'편집 중 — 칸을 눌러 고치고 ✓ 완료':'일정 v'+SCHED_VER+' · 앱 '+(window.__BUILD||'?'))+'</span>'+
+        (ed?'<button class="hm-add" style="padding:5px 10px;font-size:11px;width:auto;flex:0 0 auto" onclick="HM.resetSched()">최신 일정 다시 불러오기</button>':'')+'</div>';
       this.data.sched.forEach(function(day,di){
         h+='<div class="hm-day"><div class="hm-day-head"><span class="hm-badge">'+esc(day.d)+'</span>'+
-           '<span class="hm-date" contenteditable onblur="HM.editDay('+di+',\'date\',this)">'+esc(day.date)+'</span>'+
-           '<span class="hm-title" contenteditable onblur="HM.editDay('+di+',\'t\',this)">'+esc(day.t)+'</span>'+
+           '<span class="hm-date"'+ce('editDay('+di+',\'date\',this)')+'>'+esc(day.date)+'</span>'+
+           '<span class="hm-title"'+ce('editDay('+di+',\'t\',this)')+'>'+esc(day.t)+'</span>'+
            (parseInt(String(day.d).replace(/\D/g,''),10)?'<button class="hm-mapbtn" onclick="HM.openMap('+parseInt(String(day.d).replace(/\D/g,''),10)+')" title="지도에서 보기">🗺</button>':'')+
-           '<button class="hm-x" onclick="HM.delDay('+di+')" title="이 날 삭제">✕</button></div>'+
-           '<table class="hm-tb"><thead><tr><th class="tm">시간</th><th class="pl">장소</th><th>내용</th><th class="xx"></th></tr></thead><tbody>';
+           (ed?'<button class="hm-x" onclick="HM.delDay('+di+')" title="이 날 삭제">✕</button>':'')+'</div>'+
+           '<table class="hm-tb"><thead><tr><th class="tm">시간</th><th class="pl">장소</th><th>내용</th>'+(ed?'<th class="xx"></th>':'')+'</tr></thead><tbody>';
         day.items.forEach(function(it,ii){ var c=schedCells(it);
-          h+='<tr><td class="tm" contenteditable data-ph="–" onblur="HM.editCell('+di+','+ii+',0,this)">'+esc(c[0])+'</td>'+
-             '<td class="pl" contenteditable data-ph="장소" onblur="HM.editCell('+di+','+ii+',1,this)">'+esc(c[1])+'</td>'+
-             '<td contenteditable data-ph="내용" onblur="HM.editCell('+di+','+ii+',2,this)">'+esc(c[2])+'</td>'+
-             '<td class="xx"><button class="hm-x" onclick="HM.delItem('+di+','+ii+')">✕</button></td></tr>'; });
-        h+='</tbody></table><button class="hm-add hm-additem" onclick="HM.addItem('+di+')">＋ 일정 추가</button>';
+          h+='<tr><td class="tm" data-ph="–"'+ce('editCell('+di+','+ii+',0,this)')+'>'+esc(c[0])+'</td>'+
+             '<td class="pl" data-ph="장소"'+ce('editCell('+di+','+ii+',1,this)')+'>'+esc(c[1])+'</td>'+
+             '<td data-ph="내용"'+ce('editCell('+di+','+ii+',2,this)')+'>'+esc(c[2])+'</td>'+
+             (ed?'<td class="xx"><button class="hm-x" onclick="HM.delItem('+di+','+ii+')">✕</button></td>':'')+'</tr>'; });
+        h+='</tbody></table>'+(ed?'<button class="hm-add hm-additem" onclick="HM.addItem('+di+')">＋ 일정 추가</button>':'');
         var m=day.meals||{b:'',l:'',d:''};
         h+='<div class="hm-day-foot"><div class="foot-meals">'+
-           '<div class="mrow"><span class="mlbl">조식</span><span class="mval" contenteditable data-ph="—" onblur="HM.editMeal('+di+',\'b\',this)">'+esc(m.b||'')+'</span></div>'+
-           '<div class="mrow"><span class="mlbl">중식</span><span class="mval" contenteditable data-ph="—" onblur="HM.editMeal('+di+',\'l\',this)">'+esc(m.l||'')+'</span></div>'+
-           '<div class="mrow"><span class="mlbl">석식</span><span class="mval" contenteditable data-ph="—" onblur="HM.editMeal('+di+',\'d\',this)">'+esc(m.d||'')+'</span></div>'+
+           '<div class="mrow"><span class="mlbl">조식</span><span class="mval" data-ph="—"'+ce('editMeal('+di+',\'b\',this)')+'>'+esc(m.b||'')+'</span></div>'+
+           '<div class="mrow"><span class="mlbl">중식</span><span class="mval" data-ph="—"'+ce('editMeal('+di+',\'l\',this)')+'>'+esc(m.l||'')+'</span></div>'+
+           '<div class="mrow"><span class="mlbl">석식</span><span class="mval" data-ph="—"'+ce('editMeal('+di+',\'d\',this)')+'>'+esc(m.d||'')+'</span></div>'+
            '</div>'+
-           '<div class="foot-stay"><span class="lbl">🏨 숙소</span> <span class="foot-val" contenteditable data-ph="숙소 미정" onblur="HM.editDay('+di+',\'stay\',this)">'+esc(day.stay||'')+'</span></div>'+
+           '<div class="foot-stay"><span class="lbl">🏨 숙소</span> <span class="foot-val" data-ph="숙소 미정"'+ce('editDay('+di+',\'stay\',this)')+'>'+esc(day.stay||'')+'</span></div>'+
            '</div>';
         h+='</div>'; });
-      h+='<button class="hm-add" style="width:100%;padding:12px" onclick="HM.addDay()">＋ 날짜 추가</button>';
+      if(ed)h+='<button class="hm-add" style="width:100%;padding:12px" onclick="HM.addDay()">＋ 날짜 추가</button>';
       el.innerHTML=h; },
+    toggleSchedEdit:function(){ var a=document.activeElement; if(a&&a.blur&&a!==document.body)a.blur();
+      this._schedEd=!this._schedEd; this.renderSched(); },
     resetSched:function(){ if(!confirm('저장된 일정을 버리고 최신 일정으로 되돌립니다.\n(직접 수정하신 내용은 사라집니다) 계속할까요?'))return;
       this.data.sched=normSched(JSON.parse(JSON.stringify(SEED_SCHED)));
       LS.set('hm2026-schedver',SCHED_VER); this._schedReset=false;
@@ -9991,7 +10012,7 @@ var HM_F13="<!doctype html><html lang=\"ko\"><head><meta charset=\"utf-8\"><meta
   }
   window.__setMode=setMode;
   window.__hardReload=function(){ location.replace(location.pathname + '?v=' + Date.now()); };
-  window.__BUILD='2026.11.10.1910';
+  window.__BUILD='2026.11.10.1920';
 })();
 </script>
 

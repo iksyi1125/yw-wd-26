@@ -7,7 +7,7 @@
 <style>
   /* 입력 시 자동 확대 방지 · 좌우 폭 고정 */
   html{ -webkit-text-size-adjust:100%; text-size-adjust:100%; touch-action:manipulation; }
-  html,body{ max-width:100%; overflow-x:hidden; }
+  html,body{ max-width:100%; overflow-x:hidden; overflow-x:clip; }
 
   @import url('https://cdnjs.cloudflare.com/ajax/libs/pretendard/1.3.9/variable/pretendardvariable.min.css');
   @import url('https://fonts.googleapis.com/css2?family=Gowun+Batang:wght@400;700&display=swap');
@@ -21,7 +21,7 @@
   body{
     margin:0; background:var(--paper); color:var(--ink);
     font-family:'Pretendard Variable', Pretendard, -apple-system, 'Apple SD Gothic Neo', sans-serif;
-    font-size:14px; line-height:1.5; overflow-x:hidden;
+    font-size:14px; line-height:1.5; overflow-x:hidden; overflow-x:clip;
   }
   .wrap{ max-width:720px; margin:0 auto; padding:0 16px 96px; }
   button{ font-family:inherit; cursor:pointer; }
@@ -9420,6 +9420,40 @@ var HM_F13="<!doctype html><html lang=\"ko\"><head><meta charset=\"utf-8\"><meta
   .hm-fsub .hm-chip.on{ background:#b08d4f !important; border-color:#b08d4f !important; }
   .hm-ftype{ margin-bottom:14px !important; }
   .hm-fsep{ flex:0 0 1px; align-self:stretch; background:#e0d8ca; margin:3px 3px; }
+  .bk-wrap{ display:flex; align-items:flex-start; gap:10px; }
+  .bk-rail{ flex:0 0 84px; position:-webkit-sticky; position:sticky; top:8px; max-height:calc(100vh - 16px); overflow-y:auto; scrollbar-width:none; background:#fff; border:1px solid #e8e1d6; border-radius:14px; padding:5px; }
+  .bk-rail::-webkit-scrollbar{ display:none; }
+  .bk-rail button{ display:block; width:100%; border:0; background:transparent; font-family:inherit; text-align:left; cursor:pointer; border-radius:9px; color:#6f675e; line-height:1.3; word-break:keep-all; -webkit-tap-highlight-color:transparent; }
+  .bk-rail button small{ display:block; font-size:10px; font-weight:400; opacity:.6; margin-top:1px; }
+  .bk-z{ font-size:12.5px; font-weight:800; padding:9px 7px; letter-spacing:-.02em; }
+  .bk-z.on{ background:#2b2622; color:#fff !important; }
+  .bk-r{ font-size:11.5px; font-weight:600; padding:6px 6px 6px 12px; position:relative; }
+  .bk-r::before{ content:''; position:absolute; left:5px; top:8px; bottom:8px; width:2px; border-radius:2px; background:#e8e1d6; }
+  .bk-r.on{ background:#f3ead8; color:#8a6a2c !important; }
+  .bk-r.on::before{ background:#b08d4f; }
+  .bk-list{ flex:1 1 0; min-width:0; }
+  .bk-top{ display:flex; align-items:center; gap:8px; margin-bottom:8px; }
+  .bk-seg{ flex:1 1 auto; display:flex; background:#fff; border:1px solid #e8e1d6; border-radius:999px; padding:3px; }
+  .bk-seg button{ flex:1 1 0; border:0; background:transparent; font-family:inherit; font-size:12px; font-weight:700; color:#6f675e; padding:6px 4px; border-radius:999px; cursor:pointer; white-space:nowrap; }
+  .bk-seg button.on{ background:#2b2622; color:#fff; }
+  .bk-plus{ flex:0 0 34px; height:34px; border:1px dashed #d8cfbf; background:#fff; color:#8a8177; border-radius:50%; font-size:16px; cursor:pointer; font-family:inherit; line-height:1; }
+  .bk-subs{ display:flex; gap:5px; overflow-x:auto; scrollbar-width:none; margin:0 0 8px; padding:1px 0; }
+  .bk-subs::-webkit-scrollbar{ display:none; }
+  .bk-subs button{ flex:0 0 auto; border:1px solid #e8e1d6; background:#fff; border-radius:999px; padding:5px 10px; font-size:11.5px; color:#6f675e; cursor:pointer; font-family:inherit; white-space:nowrap; }
+  .bk-subs button.on{ background:#b08d4f; border-color:#b08d4f; color:#fff; }
+  .bk-cnt{ font-size:11px; color:#a89e8d; margin:0 2px 6px; }
+  .bk-row{ display:flex; align-items:center; gap:10px; height:74px; box-sizing:border-box; padding:8px; margin-bottom:7px; background:#fff; border:1px solid #eee7da; border-radius:13px; cursor:pointer; overflow:hidden; -webkit-tap-highlight-color:transparent; }
+  .bk-row.dim{ opacity:.55; }
+  .bk-th{ flex:0 0 56px; width:56px; height:56px; border-radius:10px; background:#f3ede0; position:relative; overflow:hidden; display:flex; align-items:center; justify-content:center; font-size:20px; }
+  .bk-th img{ position:absolute; inset:0; width:100%; height:100%; object-fit:cover; }
+  .bk-tx{ flex:1 1 0; min-width:0; }
+  .bk-t, #modeHoneymoon .bk-m, #modeHoneymoon .bk-d{ white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+  .bk-t{ font-size:13.5px; font-weight:800; color:#2f2a24; line-height:1.35; }
+  .bk-m{ font-size:11.5px; color:#6f675e; line-height:1.5; }
+  .bk-m b{ color:#b08d4f; font-weight:800; } #modeHoneymoon .bk-m small{ font-size:10.5px; color:#a89e8d; }
+  .bk-d{ font-size:11px; color:#a89e8d; line-height:1.45; }
+  .bk-d .hm-st{ margin-left:0; margin-right:5px; }
+  .bk-empty{ text-align:center; color:#a89e8d; font-size:12.5px; padding:30px 0; }
   .hm-topbar{ position:relative; display:flex; align-items:center; justify-content:center; margin:0 0 12px; min-height:40px; }
   .hm-topbar .hm-seg{ margin:0; }
   .hm-edbtn{ position:absolute; right:0; top:50%; transform:translateY(-50%); border:1px solid #e8e1d6; background:#fff; color:#6f675e; font-family:inherit; font-size:12.5px; font-weight:700; padding:8px 12px; border-radius:999px; cursor:pointer; white-space:nowrap; }
@@ -9850,46 +9884,50 @@ var HM_F13="<!doctype html><html lang=\"ko\"><head><meta charset=\"utf-8\"><meta
     delCost:function(i){ this.data.cost.splice(i,1); this._edit=null; this.save(); this.renderCost(); },
 
     /* ── 책자 ── */
-    renderBook:function(){ var self=this; var el=document.getElementById('ht-book');
-      var fh='<button class="hm-add" style="width:100%;padding:12px;margin-bottom:14px" onclick="HM.addBook()">＋ 장소 추가</button>';
-      var cntZ={}, cntR={}; this.data.book.forEach(function(p){ var z=zoneOf(p.r); cntZ[z]=(cntZ[z]||0)+1; cntR[p.r]=(cntR[p.r]||0)+1; });
-      fh+='<div class="hm-filters hm-frow">';
-      [['all','전체']].concat(ZONES).forEach(function(z){
-        fh+='<button class="hm-chip'+(self.zfilt===z[0]?' on':'')+'" onclick="HM.setZone(\''+z[0]+'\')">'+z[1]+(z[0]!=='all'?' <small>'+(cntZ[z[0]]||0)+'</small>':'')+'</button>'; });
-      fh+='</div>';
-      var zn=null; ZONES.forEach(function(z){ if(z[0]===self.zfilt)zn=z; });
-      if(zn){ var subs=zn[2].filter(function(r){ return cntR[r]; });
-        if(subs.length>1){ fh+='<div class="hm-filters hm-frow hm-fsub"><button class="hm-chip'+(self.filt==='all'?' on':'')+'" onclick="HM.setFilt(\'all\')">'+zn[1]+' 전체</button>';
-          subs.forEach(function(r){ fh+='<button class="hm-chip'+(self.filt===r?' on':'')+'" onclick="HM.setFilt(\''+r+'\')">'+regionLabel(r)+' <small>'+cntR[r]+'</small></button>'; });
-          fh+='</div>'; } }
-      fh+='<div class="hm-filters hm-frow hm-ftype">';
-      ['all'].concat(BTYPES).forEach(function(t){
-        fh+='<button class="hm-chip'+(self.tfilt===t?' on':'')+'" onclick="HM.setTypeFilt(\''+t+'\')">'+(t==='all'?'관광지+식당':t)+'</button>'; });
-      if(self.tfilt==='식당'){ fh+='<span class="hm-fsep"></span>';
-        ['all'].concat(RSUBS).forEach(function(t){ fh+='<button class="hm-chip'+(self.sfilt===t?' on':'')+'" onclick="HM.setSubFilt(\''+t+'\')">'+(t==='all'?'🍽 전체':t)+'</button>'; }); }
-      fh+='</div>';
-      if(self.tfilt==='식당'){ fh+='<div style="font-size:11.5px;color:#a89e8d;margin:0 2px 10px">구글 평점순 · 흐린 카드는 우리 일정에 영업 안 함</div>'; }
-      fh+='<div class="hm-masonry">';
-      var idx=this.data.book.map(function(p,i){return i;});
-      if(self.tfilt==='식당'){ var bk=this.data.book; idx.sort(function(a,b){ var A=bk[a],B=bk[b]; var na=stOff(A.st)?1:0, nb=stOff(B.st)?1:0; if(na!==nb)return na-nb; return (parseFloat(B.g)||0)-(parseFloat(A.g)||0); }); }
-      idx.forEach(function(i){ var p=self.data.book[i];
+    renderBook:function(){ var self=this; var el=document.getElementById('ht-book'); var bk=this.data.book;
+      var cntZ={}, cntR={}; bk.forEach(function(p){ var z=zoneOf(p.r); cntZ[z]=(cntZ[z]||0)+1; cntR[p.r]=(cntR[p.r]||0)+1; });
+      /* 왼쪽: 구역 → 세부지역 */
+      var rail='<button class="bk-z'+(self.zfilt==='all'?' on':'')+'" onclick="HM.setZone(\'all\')">전체<small>'+bk.length+'</small></button>';
+      ZONES.forEach(function(z){ var on=self.zfilt===z[0];
+        rail+='<button class="bk-z'+(on?' on':'')+'" onclick="HM.setZone(\''+z[0]+'\')">'+z[1]+'<small>'+(cntZ[z[0]]||0)+'</small></button>';
+        var subs=z[2].filter(function(r){ return cntR[r]; });
+        if(on&&subs.length>1){ subs.forEach(function(r){
+          rail+='<button class="bk-r'+(self.filt===r?' on':'')+'" onclick="HM.setFilt(\''+r+'\')">'+regionLabel(r)+'<small>'+cntR[r]+'</small></button>'; }); } });
+      /* 오른쪽 위: 종류 */
+      var top='<div class="bk-top"><div class="bk-seg">';
+      ['all'].concat(BTYPES).forEach(function(t){ top+='<button class="'+(self.tfilt===t?'on':'')+'" onclick="HM.setTypeFilt(\''+t+'\')">'+(t==='all'?'전체':t)+'</button>'; });
+      top+='</div><button class="bk-plus" onclick="HM.addBook()" title="장소 추가">＋</button></div>';
+      if(self.tfilt==='식당'){ top+='<div class="bk-subs">';
+        ['all'].concat(RSUBS).forEach(function(t){ top+='<button class="'+(self.sfilt===t?'on':'')+'" onclick="HM.setSubFilt(\''+t+'\')">'+(t==='all'?'전체':t)+'</button>'; });
+        top+='</div>'; }
+      /* 오른쪽: 같은 크기 목록 */
+      var idx=bk.map(function(p,i){return i;});
+      if(self.tfilt==='식당'){ idx.sort(function(a,b){ var A=bk[a],B=bk[b]; var na=stOff(A.st)?1:0, nb=stOff(B.st)?1:0; if(na!==nb)return na-nb; return (parseFloat(B.g)||0)-(parseFloat(A.g)||0); }); }
+      var rows='', n=0;
+      idx.forEach(function(i){ var p=bk[i];
         if(self.zfilt!=='all'&&zoneOf(p.r)!==self.zfilt)return;
         if(self.filt!=='all'&&p.r!==self.filt)return;
         if(self.tfilt!=='all'&&p.cat!==self.tfilt)return;
         if(self.tfilt==='식당'&&self.sfilt!=='all'&&p.sub!==self.sfilt)return;
-        var lead=(p.lead||'').length>96?p.lead.slice(0,96)+'…':(p.lead||'');
-        var rt=p.g?'<div class="hm-rt">★ '+esc(p.g)+(p.gn?' <small>('+esc(p.gn)+')</small>':'')+(p.st?'<span class="hm-st '+p.st+'">'+stLabel(p.st)+'</span>':'')+'</div>':'';
-        fh+='<div class="hm-card'+(stOff(p.st)?' dim':'')+'" onclick="HM.openCard('+i+')"><span class="edit-hint">눌러서 보기·수정</span>'+
-            (p.img?'<img loading="lazy" onerror="this.style.display=&quot;none&quot;" src="'+p.img+'" alt="'+esc(p.t)+'">':'')+
-            '<div class="cb"><span class="hm-tag hm-t-'+esc(p.r||'')+'">'+esc(regionLabel(p.r))+'</span>'+
-            '<span class="hm-tag2">'+esc(p.sub||p.cat||'관광지')+'</span><div class="cm">'+esc(p.day||'')+'</div>'+rt+
-            '<h3>'+esc(p.t||'')+'</h3><p>'+esc(lead)+'</p></div></div>'; });
-      fh+='</div>';
-      el.innerHTML=fh; },
-    setTypeFilt:function(t){ this.tfilt=t; if(t!=='식당')this.sfilt='all'; this.renderBook(); },
-    setSubFilt:function(t){ this.sfilt=t; this.renderBook(); },
-    setFilt:function(f){ this.filt=f; this.renderBook(); },
-    setZone:function(z){ this.zfilt=z; this.filt='all'; this.renderBook(); },
+        n++;
+        var ph=(p.cat==='식당'?'🍽':'📍');
+        var meta=(p.g?'<b>★ '+esc(p.g)+'</b>'+(p.gn?' <small>('+esc(p.gn)+')</small>':'')+' · ':'')+esc(p.sub||p.cat||'관광지')+' · '+esc(regionLabel(p.r));
+        rows+='<div class="bk-row'+(stOff(p.st)?' dim':'')+'" onclick="HM.openCard('+i+')">'+
+              '<div class="bk-th"><span>'+ph+'</span>'+(p.img?'<img loading="lazy" onerror="this.remove()" src="'+p.img+'" alt="">':'')+'</div>'+
+              '<div class="bk-tx"><div class="bk-t">'+esc(p.t||'')+'</div>'+
+              '<div class="bk-m">'+meta+'</div>'+
+              '<div class="bk-d">'+(p.st?'<span class="hm-st '+p.st+'">'+stLabel(p.st)+'</span>':'')+esc(p.day||'')+'</div></div></div>'; });
+      if(!n)rows='<div class="bk-empty">해당하는 곳이 없어요</div>';
+      el.innerHTML='<div class="bk-wrap"><div class="bk-rail" id="bk-rail">'+rail+'</div><div class="bk-list">'+top+
+        '<div class="bk-cnt">'+n+'곳'+(self.tfilt==='식당'?' · 구글 평점순 · 흐린 줄은 지금 못 가는 곳':'')+'</div>'+rows+'</div></div>';
+      var off=this.stickOff(), rl0=document.getElementById('bk-rail'); if(rl0){ rl0.style.top=(off+8)+'px'; rl0.style.maxHeight='calc(100vh - '+(off+16)+'px)'; }
+      var on=el.querySelector('.bk-rail .on'); if(on&&on.scrollIntoView){ try{ var rl=document.getElementById('bk-rail'); var r1=on.getBoundingClientRect(), r2=rl.getBoundingClientRect(); if(r1.top<r2.top||r1.bottom>r2.bottom)rl.scrollTop+=r1.top-r2.top-40; }catch(e){} } },
+    stickOff:function(){ var nav=document.querySelector('#modeHoneymoon .hm-subtabs'); if(!nav)return 0; var cs=getComputedStyle(nav); if(cs.position!=='sticky'&&cs.position!=='-webkit-sticky')return 0; return nav.offsetHeight+(parseFloat(cs.top)||0); },
+    bookTop:function(){ var el=document.getElementById('ht-book'); if(!el)return; var y=el.getBoundingClientRect().top+(window.pageYOffset||0)-this.stickOff()-6; if((window.pageYOffset||0)>y)window.scrollTo(0,y); },
+    setTypeFilt:function(t){ this.tfilt=t; if(t!=='식당')this.sfilt='all'; this.renderBook(); this.bookTop(); },
+    setSubFilt:function(t){ this.sfilt=t; this.renderBook(); this.bookTop(); },
+    setFilt:function(f){ this.filt=(this.filt===f?'all':f); this.renderBook(); this.bookTop(); },
+    setZone:function(z){ this.zfilt=z; this.filt='all'; this.renderBook(); this.bookTop(); },
     miniMap:function(p){
       if(typeof HM_GEO==='undefined')return '';
       var g=HM_GEO[geoOf(p.r)]; if(!g)return '';
@@ -10039,7 +10077,7 @@ var HM_F13="<!doctype html><html lang=\"ko\"><head><meta charset=\"utf-8\"><meta
   }
   window.__setMode=setMode;
   window.__hardReload=function(){ location.replace(location.pathname + '?v=' + Date.now()); };
-  window.__BUILD='2026.11.10.2100';
+  window.__BUILD='2026.11.10.2200';
 })();
 </script>
 

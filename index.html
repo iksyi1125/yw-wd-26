@@ -10201,6 +10201,12 @@ var HM_F13="<!doctype html><html lang=\"ko\"><head><meta charset=\"utf-8\"><meta
   var SEEDW=[{id:'cash',n:'현금',ic:'💶',init:4075.52},{id:'hana',n:'하나머니',ic:'💳',init:3719.22},{id:'card',n:'다른 카드',ic:'🪪',init:null}];
   var CATS=[['식비','🍽'],['카페·간식','☕'],['교통','🚇'],['관광·입장','🎟'],['쇼핑','🛍'],['숙박','🏨'],['기타','📌']];
   var TESS='https://cdn.jsdelivr.net/npm/tesseract.js@5.1.1/dist/tesseract.min.js';
+  var AK='hm2026-akey', AM='hm2026-amodel', AI_API='https://api.anthropic.com', AI_MODEL='claude-haiku-4-5';
+  var AI_PROMPT='This photo is a shop/restaurant receipt, most likely from France (today is {TODAY}). Read it and reply with ONLY one JSON object, no other text:\n'+
+    '{"is_receipt": true|false, "merchant": "shop name as people call it, max 30 chars, empty if unreadable", "total": final amount actually paid including tax as a number (not subtotal, not cash handed over, not change), '+
+    '"currency": "EUR" or other ISO code, "date": "YYYY-MM-DD" or "", "category": one of "식비","카페·간식","교통","관광·입장","쇼핑","숙박","기타", '+
+    '"items": "very short Korean summary of what was bought, max 20 chars, or empty", "paid_by": "cash" | "card" | ""}\n'+
+    'Category guide: 식비=restaurants/meals, 카페·간식=cafe/bakery/ice cream/snacks, 교통=train/metro/taxi/fuel/parking/tolls, 관광·입장=museums/tickets/tours, 쇼핑=supermarket/pharmacy/shops/souvenirs, 숙박=hotel/tourist tax.';
   var TRIP0=Date.UTC(2026,10,15);
   function p2(n){ return (n<10?'0':'')+n; }
   function today(){ var d=new Date(); return d.getFullYear()+'-'+p2(d.getMonth()+1)+'-'+p2(d.getDate()); }
@@ -10303,7 +10309,7 @@ var HM_F13="<!doctype html><html lang=\"ko\"><head><meta charset=\"utf-8\"><meta
         else if(e.k==='i'){ ic='➕'; t1=e.t||'입금'; t2=wn+'에 들어옴'; am='<div class="am in">+'+fmt(cents(e.a))+'</div>'; }
         else { ic=catIcon(e.c); t1=e.t||e.c||'지출'; t2=(e.c||'기타')+' · '+wn+(e.src==='r'?' · 📷':''); am='<div class="am">'+fmt(-cents(e.a))+'</div>'; }
         h+='<div class="hl-it" onclick="HL.open(\''+esc(e.id)+'\')"><div class="ic">'+ic+'</div><div class="tx"><div class="t1">'+esc(t1)+'</div><div class="t2">'+esc(t2)+'</div></div>'+am+'</div>'; });
-      h+='<div class="hl-foot"><button onclick="HL.openW()">⚙ 시작 금액 수정</button></div>';
+      h+='<div class="hl-foot"><button onclick="HL.openW()">⚙ 시작 금액 수정</button> <button onclick="HL.openAI()">🤖 Claude 영수증 읽기'+(this.aiKey()?' ✅':' 설정')+'</button></div>';
       el.innerHTML=h; },
 
     /* ── 입력 창 ── */
@@ -10336,7 +10342,7 @@ var HM_F13="<!doctype html><html lang=\"ko\"><head><meta charset=\"utf-8\"><meta
       h+='<div class="lb">'+(f.k==='x'?'가게 · 메모':'메모')+'</div><input class="in" id="hl-t" type="text" autocomplete="off" placeholder="'+(f.k==='x'?'예: 점심 Le Ju\'':'선택')+'" value="'+esc(f.t)+'">';
       h+='<div class="lb">날짜</div><input class="in" id="hl-d" type="date" value="'+esc(f.d)+'">';
       h+='<div class="btns">'+(f.id?'<button class="del" onclick="HL.del()">삭제</button>':'')+'<button onclick="HL.close()">취소</button><button class="save" onclick="HL.save()">저장</button></div>';
-      if(f.raw)h+='<details><summary>영수증에서 읽은 글자 보기</summary><pre>'+esc(f.raw)+'</pre></details>';
+      if(f.raw)h+='<details><summary>'+esc(f.rawT||'영수증에서 읽은 글자 보기')+'</summary><pre>'+esc(f.raw)+'</pre></details>';
       document.getElementById('hl-box').innerHTML=h; },
     save:function(){ this.sync(); var f=this._f, a=parseAmt(f.a);
       if(!(a>0)){ var b=document.getElementById('hl-amt'); if(b)b.classList.add('bad'); var i=document.getElementById('hl-a'); if(i)try{ i.focus(); }catch(x){} return; }
@@ -10386,11 +10392,11 @@ var HM_F13="<!doctype html><html lang=\"ko\"><head><meta charset=\"utf-8\"><meta
     busy:function(t,s){ document.getElementById('hl-box').innerHTML='<div class="busy"><div class="sp"></div>'+esc(t)+'<small id="hl-prog">'+esc(s||'')+'</small></div>'+
       '<div class="btns"><button onclick="HL.cancelScan()">취소하고 직접 입력</button></div>'; },
     cancelScan:function(){ this._scan=(this._scan||0)+1; var f=this.blank(); this._f=f; this.form(); },
-    toCanvas:function(file){ return new Promise(function(res,rej){ var url=URL.createObjectURL(file), im=new Image();
-      im.onload=function(){ try{ var mx=2000, s=Math.min(1,mx/Math.max(im.naturalWidth,im.naturalHeight)); var cv=document.createElement('canvas');
+    toCanvas:function(file,mx,gray){ mx=mx||2000; return new Promise(function(res,rej){ var url=URL.createObjectURL(file), im=new Image();
+      im.onload=function(){ try{ var s=Math.min(1,mx/Math.max(im.naturalWidth,im.naturalHeight)); var cv=document.createElement('canvas');
           cv.width=Math.max(1,Math.round(im.naturalWidth*s)); cv.height=Math.max(1,Math.round(im.naturalHeight*s));
           var cx=cv.getContext('2d'); cx.drawImage(im,0,0,cv.width,cv.height);
-          try{ var id=cx.getImageData(0,0,cv.width,cv.height), p=id.data; for(var i=0;i<p.length;i+=4){ var g=(p[i]*299+p[i+1]*587+p[i+2]*114)/1000; p[i]=p[i+1]=p[i+2]=g; } cx.putImageData(id,0,0); }catch(x){}
+          if(gray){ try{ var id=cx.getImageData(0,0,cv.width,cv.height), p=id.data; for(var i=0;i<p.length;i+=4){ var g=(p[i]*299+p[i+1]*587+p[i+2]*114)/1000; p[i]=p[i+1]=p[i+2]=g; } cx.putImageData(id,0,0); }catch(x){} }
           URL.revokeObjectURL(url); res(cv); }catch(e){ rej(e); } };
       im.onerror=function(){ URL.revokeObjectURL(url); rej(new Error('img')); }; im.src=url; }); },
     loadTess:function(){ if(window.Tesseract)return Promise.resolve(); if(this._tess)return this._tess; var self=this;
@@ -10402,16 +10408,76 @@ var HM_F13="<!doctype html><html lang=\"ko\"><head><meta charset=\"utf-8\"><meta
             if(m.status==='recognizing text')p.textContent='글자 읽는 중 '+Math.round((m.progress||0)*100)+'%'; else p.textContent='준비 중… (처음 한 번은 10~20초)'; } })
           .then(function(w){ self._worker=w; var tp=self._tp; return tp?w.setParameters(tp).then(function(){ return w; },function(){ return w; }):w; }); })
       .then(function(w){ return w.recognize(cv); }).then(function(r){ return (r&&r.data&&r.data.text)||''; }); },
-    scan:function(file){ var self=this, tok=(this._scan=(this._scan||0)+1); this._f=this.blank(); this.busy('영수증을 읽는 중…','준비 중…'); this.show();
-      var done=false, fin=function(text,err){ if(done||tok!==self._scan)return; done=true; var f=self.blank(); f.src='r';
-        if(err){ f.src=''; f.msg='영수증을 읽지 못했습니다 (인터넷 연결 확인) — 직접 입력해 주세요.'; f.err=1; }
-        else { var r=parseReceipt(text); f.raw=text; f.cands=r.cands; f.c=r.c; if(r.t)f.t=r.t; if(r.d)f.d=r.d;
-          if(r.a>0&&r.kw){ f.a=r.a.toFixed(2); f.msg='영수증에서 읽은 값입니다 — 금액이 맞는지 꼭 확인하고 저장하세요.'; }
-          else if(r.a>0){ f.a=r.a.toFixed(2); f.msg='합계 줄을 찾지 못해 가장 큰 금액을 넣었습니다 — 영수증과 꼭 비교해 주세요.'; f.err=1; }
-          else { f.msg='금액을 찾지 못했습니다 — 직접 입력해 주세요.'; f.err=1; } }
-        self._f=f; self.form(); };
-      setTimeout(function(){ fin('',true); },75000);
-      this.toCanvas(file).then(function(cv){ return self.ocr(cv); }).then(function(t){ fin(t,false); }).catch(function(){ fin('',true); }); },
+
+    /* ── Claude 로 읽기 (API 키는 이 폰의 localStorage 에만 둠 · 동기화 안 함 · 저장소에도 없음) ── */
+    aiKey:function(){ var k=LS.get(AK,''); return typeof k==='string'?k:''; },
+    aiErr:function(status,j){ var m=(j&&j.error&&j.error.message)||'', e=new Error(m||('HTTP '+status)); e.status=status; e.kind=(j&&j.error&&j.error.type)||'';
+      e.ko= status===401?'API 키가 맞지 않습니다': /credit balance/i.test(m)?'API 크레딧이 없습니다': status===429?'요청이 너무 많습니다 (잠시 후 다시)': status===413?'사진이 너무 큽니다': status>=500?'Claude 서버가 바쁩니다': status===404?'쓸 수 있는 모델을 찾지 못했습니다': status===403?'이 키로는 쓸 수 없습니다 (권한)':'요청이 거부됐습니다 ('+status+')';
+      return e; },
+    aiFetch:function(key,path,body){ var ctl=(typeof AbortController!=='undefined')?new AbortController():null, to=setTimeout(function(){ if(ctl)try{ ctl.abort(); }catch(x){} },40000), self=this;
+      var o={ method:body?'POST':'GET', headers:{'x-api-key':key,'anthropic-version':'2023-06-01','anthropic-dangerous-direct-browser-access':'true'} };
+      if(body){ o.headers['content-type']='application/json'; o.body=JSON.stringify(body); } if(ctl)o.signal=ctl.signal;
+      return fetch(AI_API+path,o).then(function(res){ return res.json().catch(function(){ return {}; }).then(function(j){ clearTimeout(to); if(!res.ok)throw self.aiErr(res.status,j); return j; }); },
+        function(){ clearTimeout(to); var e=new Error('network'); e.ko='인터넷 연결이 안 됩니다'; throw e; }); },
+    aiModels:function(key){ return this.aiFetch(key,'/v1/models?limit=100').then(function(j){ var L=(j&&j.data)||[], pick=function(re){ var c=L.filter(function(m){ return re.test(m.id||''); });
+        c.sort(function(a,b){ return String(b.created_at||'').localeCompare(String(a.created_at||'')); }); return c.length?c[0].id:''; };
+      return pick(/haiku/i)||pick(/sonnet/i)||(L[0]&&L[0].id)||''; }); },
+    aiSend:function(key,content,maxTok){ var self=this, model=LS.get(AM,'')||AI_MODEL, mk=function(m){ return {model:m,max_tokens:maxTok||400,messages:[{role:'user',content:content}]}; };
+      return this.aiFetch(key,'/v1/messages',mk(model)).catch(function(e){ if(e.status!==404&&e.kind!=='not_found_error')throw e;
+        return self.aiModels(key).then(function(m){ if(!m||m===model)throw e; LS.set(AM,m); return self.aiFetch(key,'/v1/messages',mk(m)); }); })
+      .then(function(j){ var t=''; ((j&&j.content)||[]).forEach(function(b){ if(b&&b.type==='text')t+=b.text; }); return t; }); },
+    aiRead:function(cv,key){ var b64=cv.toDataURL('image/jpeg',0.82).split(',')[1];
+      return this.aiSend(key,[{type:'image',source:{type:'base64',media_type:'image/jpeg',data:b64}},{type:'text',text:AI_PROMPT.replace('{TODAY}',today())}],400).then(function(t){
+        var a=t.indexOf('{'), b=t.lastIndexOf('}'), j=null; try{ j=JSON.parse(t.slice(a,b+1)); }catch(x){} if(!j){ var e=new Error('parse'); e.ko='Claude 답을 해석하지 못했습니다'; throw e; }
+        var r={raw:t.trim()}; r.a=Math.round((parseFloat(j.total)||0)*100)/100; r.cur=String(j.currency||'EUR').toUpperCase();
+        r.d=/^\d{4}-\d{2}-\d{2}$/.test(j.date||'')?j.date:''; r.c='기타'; CATS.forEach(function(x){ if(x[0]===j.category)r.c=x[0]; });
+        var m=String(j.merchant||'').replace(/\s+/g,' ').trim().slice(0,40), it=String(j.items||'').replace(/\s+/g,' ').trim().slice(0,30); r.t=m&&it?m+' · '+it:(m||it);
+        r.pay=(j.paid_by==='cash'||j.paid_by==='card')?j.paid_by:''; r.ok=(j.is_receipt!==false); return r; }); },
+    /* 책자 카드와 대조: 영수증의 전화번호(끝 9자리) 또는 가게 이름이 책자에 있으면 그 이름·분류를 씀 */
+    bookMatch:function(text){ var B=(window.HM&&HM.data&&HM.data.book)||[]; if(!B.length||!text)return null;
+      var norm=function(s){ s=String(s||'').toLowerCase(); try{ s=s.normalize('NFD').replace(/[̀-ͯ]/g,''); }catch(x){} return s.replace(/[^a-z0-9]/g,''); };
+      var ph={}, m, re=/(?:\+\s?33\s?\(?0?\)?|\b0)\s?[1-9](?:[\s.\-]?\d{2}){4}/g; while((m=re.exec(text))){ var dg=m[0].replace(/\D/g,''); if(dg.length>=9)ph[dg.slice(-9)]=1; }
+      var nt=norm(text), best=null, bl=0, out=function(p){ var nm=String(p.t||'').split('(')[0].trim(); return {t:nm.slice(0,40), c:p.cat==='식당'?(p.sub==='카페'?'카페·간식':'식비'):'관광·입장'}; };
+      for(var i=0;i<B.length;i++){ var p=B[i], tel=String(p.tel||'').replace(/\D/g,''); if(tel.length>=9&&ph[tel.slice(-9)])return out(p); }
+      for(var k=0;k<B.length;k++){ var nm=norm(String(B[k].t||'').split('(')[0]); if(nm.length>=6&&nm.length>bl&&nt.indexOf(nm)>=0){ best=B[k]; bl=nm.length; } }
+      return best?out(best):null; },
+    scan:function(file){ var self=this, tok=(this._scan=(this._scan||0)+1), key=this.aiKey(); this._f=this.blank(); this.busy(key?'Claude가 영수증을 읽는 중…':'영수증을 읽는 중…',key?'보통 3~6초':'준비 중…'); this.show();
+      var done=false, put=function(f){ if(done||tok!==self._scan)return; done=true; self._f=f; self.form(); };
+      var fail=function(why){ var f=self.blank(); f.msg='영수증을 읽지 못했습니다'+(why?' ('+why+')':' (인터넷 연결 확인)')+' — 직접 입력해 주세요.'; f.err=1; put(f); };
+      var viaOcr=function(note){ if(done||tok!==self._scan)return; var t=document.querySelector('#hl-box .busy'); if(t&&note)self.busy('기본 방식으로 다시 읽는 중…','준비 중…');
+        self.toCanvas(file,2000,true).then(function(cv){ return self.ocr(cv); }).then(function(text){ var f=self.blank(); f.src='r';
+          var r=parseReceipt(text), bm=self.bookMatch(text); f.raw=text; f.cands=r.cands; f.c=r.c; if(r.t)f.t=r.t; if(r.d)f.d=r.d; if(bm){ f.t=bm.t; f.c=bm.c; }
+          var pre=note?'Claude로 읽지 못해('+note+') 기본 방식으로 읽었습니다. ':'';
+          if(r.a>0&&r.kw){ f.a=r.a.toFixed(2); f.msg=pre+'영수증에서 읽은 값입니다 — 금액이 맞는지 꼭 확인하고 저장하세요.'; if(note)f.err=1; }
+          else if(r.a>0){ f.a=r.a.toFixed(2); f.msg=pre+'합계 줄을 찾지 못해 가장 큰 금액을 넣었습니다 — 영수증과 꼭 비교해 주세요.'; f.err=1; }
+          else { f.msg=pre+'금액을 찾지 못했습니다 — 직접 입력해 주세요.'; f.err=1; }
+          put(f); }).catch(function(){ fail(note||''); }); };
+      setTimeout(function(){ fail('시간 초과'); },key?120000:75000);
+      if(!key){ viaOcr(''); return; }
+      this.toCanvas(file,1568,false).then(function(cv){ return self.aiRead(cv,key); }).then(function(r){ var f=self.blank(); f.src='r'; f.raw=r.raw; f.rawT='Claude가 읽은 내용 보기';
+          f.c=r.c; if(r.t)f.t=r.t; if(r.d)f.d=r.d; if(r.pay==='cash')f.w='cash'; else if(r.pay==='card'&&f.w==='cash')f.w='hana';
+          if(r.a>0&&r.ok){ f.a=r.a.toFixed(2); f.msg='Claude가 읽은 값입니다 — 금액을 확인하고 저장하세요.'+(r.cur!=='EUR'?' (영수증 통화가 '+r.cur+' 입니다)':''); if(r.cur!=='EUR')f.err=1; }
+          else { f.msg='영수증에서 금액을 찾지 못했습니다 — 직접 입력해 주세요.'; f.err=1; }
+          put(f); },
+        function(e){ viaOcr((e&&e.ko)||'오류'); }); },
+
+    /* ── Claude 설정 창 ── */
+    openAI:function(msg,bad){ var k=this.aiKey();
+      var h='<div class="hd"><b>🤖 Claude로 영수증 읽기</b><button onclick="HL.close()">✕</button></div>'+
+        (msg?'<div class="msg'+(bad?' err':'')+'">'+esc(msg)+'</div>':'')+
+        '<div class="msg" style="font-weight:500">API 키를 넣으면 영수증 사진을 Claude가 읽어 가게·금액·날짜·분류를 채웁니다. 키는 <b>이 폰에만</b> 저장되고 다른 폰과 동기화되지 않습니다. 영수증 사진은 읽을 때만 Claude(Anthropic)로 전송됩니다.</div>'+
+        '<div class="lb">상태</div><div style="font-size:14px;font-weight:700;margin:0 2px 4px">'+(k?'✅ 키 저장됨 (…'+esc(k.slice(-4))+')':'키 없음 — 기본 방식(폰 안에서 글자 인식)으로 읽는 중')+'</div>'+
+        '<div class="lb">'+(k?'키 바꾸기':'API 키 붙여넣기')+'</div><input class="in" id="hl-key" type="password" autocomplete="off" autocapitalize="off" autocorrect="off" spellcheck="false" placeholder="sk-ant-…">'+
+        '<div class="btns"><button onclick="HL.close()">닫기</button>'+(k?'<button class="del" onclick="HL.clearAI()">키 지우기</button><button onclick="HL.testAI()">연결 테스트</button>':'')+'<button class="save" onclick="HL.saveAI()">저장</button></div>'+
+        '<details><summary>키는 어디서 받나요</summary><pre style="font-family:inherit;font-size:12px">1) 컴퓨터에서 claude.ai → Settings → Billing → API credits 에서 Console 조직 연결 (Max 플랜 월 $100 크레딧)\n2) platform.claude.com → API keys 에서 키 만들기\n3) 그 키를 여기에 붙여넣고 저장 → 연결 테스트\n\n키를 잃어버렸거나 폰을 분실하면 platform.claude.com 에서 그 키를 삭제하면 됩니다.</pre></details>';
+      this._f={aiform:1}; document.getElementById('hl-box').innerHTML=h; this.show(); },
+    saveAI:function(){ var i=document.getElementById('hl-key'), v=i?String(i.value||'').trim():''; if(!v){ this.openAI('키를 붙여넣은 뒤 저장을 눌러 주세요.',1); return; }
+      if(!/^sk-ant-[\w\-]{20,}$/.test(v)){ this.openAI('키 형식이 아닙니다 (sk-ant- 로 시작해야 합니다).',1); return; }
+      LS.set(AK,v); LS.set(AM,''); this.openAI('저장했습니다. "연결 테스트"를 눌러 확인해 보세요.'); this.render(); },
+    clearAI:function(){ if(!confirm('이 폰에 저장된 API 키를 지울까요?'))return; try{ localStorage.removeItem(AK); localStorage.removeItem(AM); }catch(x){} this.openAI('키를 지웠습니다. 기본 방식으로 읽습니다.'); this.render(); },
+    testAI:function(){ var self=this, k=this.aiKey(); if(!k)return; this.openAI('연결 확인 중…');
+      this.aiSend(k,[{type:'text',text:'Reply with exactly: OK'}],8).then(function(){ if(self._f&&self._f.aiform)self.openAI('✅ 연결됐습니다. 이제 📷 영수증을 누르면 Claude가 읽습니다. (모델: '+(LS.get(AM,'')||AI_MODEL)+')'); },
+        function(e){ if(self._f&&self._f.aiform)self.openAI('연결 실패 — '+((e&&e.ko)||'오류')+(e&&e.message&&e.message!=='network'?' · '+String(e.message).slice(0,120):''),1); }); },
 
     init:function(){ this.load(); this.connect(); if(window.HM){ HM.cur='led'; } this.render(); }
   };
@@ -10434,7 +10500,7 @@ var HM_F13="<!doctype html><html lang=\"ko\"><head><meta charset=\"utf-8\"><meta
   }
   window.__setMode=setMode;
   window.__hardReload=function(){ location.replace(location.pathname + '?v=' + Date.now()); };
-  window.__BUILD='2026.11.13.1930';
+  window.__BUILD='2026.11.13.2100';
   try{ setMode('hm'); }catch(e){}  /* 열면 신혼여행 탭부터 */
 })();
 </script>

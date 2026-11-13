@@ -10193,8 +10193,10 @@ var HM_F13="<!doctype html><html lang=\"ko\"><head><meta charset=\"utf-8\"><meta
            set:function(k,v){ try{localStorage.setItem(k,JSON.stringify(v));}catch(e){} } };
   var esc=function(s){return String(s==null?'':s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');};
   var KEY='hm2026-led';
-  /* 시작 금액 (2026-11-13 기준) — 앱에서 "시작 금액 수정"으로 바꿀 수 있음 */
-  var SEEDW=[{id:'cash',n:'현금',ic:'💶',init:4070},{id:'hana',n:'하나머니',ic:'💳',init:2019.22},{id:'fx',n:'외화통장',ic:'🏦',init:1700},{id:'card',n:'다른 카드',ic:'🪪',init:null}];
+  /* 시작 금액 (2026-11-13 기준, 현금 = 지폐 4,070 + 동전 5.52) — 앱에서 "시작 금액 수정"으로 바꿀 수 있음.
+     여기 값을 바꿀 때는 SEED_U 도 그때 시각(ms)으로 올릴 것: 그보다 먼저 저장된 시작 금액을 이 값으로 덮어씀 (내역은 그대로) */
+  var SEED_U=1794556418026;
+  var SEEDW=[{id:'cash',n:'현금',ic:'💶',init:4075.52},{id:'hana',n:'하나머니',ic:'💳',init:2019.22},{id:'fx',n:'외화통장',ic:'🏦',init:1700},{id:'card',n:'다른 카드',ic:'🪪',init:null}];
   var CATS=[['식비','🍽'],['카페·간식','☕'],['교통','🚇'],['관광·입장','🎟'],['쇼핑','🛍'],['숙박','🏨'],['기타','📌']];
   var TESS='https://cdn.jsdelivr.net/npm/tesseract.js@5.1.1/dist/tesseract.min.js';
   var TRIP0=Date.UTC(2026,10,15);
@@ -10257,7 +10259,9 @@ var HM_F13="<!doctype html><html lang=\"ko\"><head><meta charset=\"utf-8\"><meta
   var HL={ d:null, st:'local', _f:null, _worker:null, _tess:null, _tp:null,
     parse:parseReceipt,
     load:function(){ var d=LS.get(KEY,null); if(!d||typeof d!=='object')d={};
-      if(!d.w||!Array.isArray(d.w.list)||!d.w.list.length)d.w={u:0,list:JSON.parse(JSON.stringify(SEEDW))};
+      if(!d.w||!Array.isArray(d.w.list)||!d.w.list.length)d.w={u:SEED_U,list:JSON.parse(JSON.stringify(SEEDW))};
+      else if((d.w.u||0)<SEED_U){ SEEDW.forEach(function(s){ var w=null; d.w.list.forEach(function(x){ if(x.id===s.id)w=x; }); if(w)w.init=s.init; else d.w.list.push(JSON.parse(JSON.stringify(s))); });
+        d.w.u=SEED_U; LS.set(KEY,d); }
       if(!d.e||typeof d.e!=='object')d.e={}; this.d=d; },
     persist:function(){ LS.set(KEY,this.d); },
     wal:function(id){ var L=this.d.w.list; for(var i=0;i<L.length;i++)if(L[i].id===id)return L[i]; return null; },
@@ -10425,7 +10429,7 @@ var HM_F13="<!doctype html><html lang=\"ko\"><head><meta charset=\"utf-8\"><meta
   }
   window.__setMode=setMode;
   window.__hardReload=function(){ location.replace(location.pathname + '?v=' + Date.now()); };
-  window.__BUILD='2026.11.13.1700';
+  window.__BUILD='2026.11.13.1830';
   try{ setMode('hm'); }catch(e){}  /* 열면 신혼여행 탭부터 */
 })();
 </script>

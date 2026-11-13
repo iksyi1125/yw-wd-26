@@ -10204,14 +10204,14 @@ var HM_F13="<!doctype html><html lang=\"ko\"><head><meta charset=\"utf-8\"><meta
   var ALIAS={fx:'hana'};   /* 예전 '외화통장' 지갑은 하나머니로 합침 — 옛 내역의 fx 는 hana 로 읽음 */
   function wid(id){ return ALIAS[id]||id; }
   var SEEDW=[{id:'cash',n:'현금',ic:'💶',init:4075.52},{id:'hana',n:'하나머니',ic:'💳',init:3719.22},{id:'card',n:'다른 카드',ic:'🪪',init:null}];
-  var CATS=[['식비','🍽'],['카페·간식','☕'],['교통','🚇'],['관광·입장','🎟'],['쇼핑','🛍'],['숙박','🏨'],['기타','📌']];
+  var CATS=[['식비','🍽'],['카페·간식','☕'],['마트·생필품','🛒'],['교통','🚇'],['관광·입장','🎟'],['쇼핑','🛍'],['숙박','🏨'],['기타','📌']];
   var TESS='https://cdn.jsdelivr.net/npm/tesseract.js@5.1.1/dist/tesseract.min.js';
   var AK='hm2026-akey', AKU='hm2026-akeyu', AKS='hm2026-akeysh', AM='hm2026-amodel', AI_API='https://api.anthropic.com', AI_MODEL='claude-haiku-4-5';
   var AI_PROMPT='This photo is a shop/restaurant receipt, most likely from France (today is {TODAY}). Read it and reply with ONLY one JSON object, no other text:\n'+
     '{"is_receipt": true|false, "merchant": "shop name as people call it, max 30 chars, empty if unreadable", "total": final amount actually paid including tax as a number (not subtotal, not cash handed over, not change), '+
-    '"currency": "EUR" or other ISO code, "date": "YYYY-MM-DD" or "", "category": one of "식비","카페·간식","교통","관광·입장","쇼핑","숙박","기타", '+
+    '"currency": "EUR" or other ISO code, "date": "YYYY-MM-DD" or "", "category": one of "식비","카페·간식","마트·생필품","교통","관광·입장","쇼핑","숙박","기타", '+
     '"items": "very short Korean summary of what was bought, max 20 chars, or empty", "paid_by": "cash" | "card" | ""}\n'+
-    'Category guide: 식비=restaurants/meals, 카페·간식=cafe/bakery/ice cream/snacks, 교통=train/metro/taxi/fuel/parking/tolls, 관광·입장=museums/tickets/tours, 쇼핑=supermarket/pharmacy/shops/souvenirs, 숙박=hotel/tourist tax.';
+    'Category guide: 식비=restaurants/meals, 카페·간식=cafe/bakery/ice cream/snacks, 교통=train/metro/taxi/fuel/parking/tolls, 마트·생필품=supermarket/grocery/convenience store/pharmacy/toiletries/water, 관광·입장=museums/tickets/tours, 쇼핑=souvenirs/clothes/gifts/cosmetics/department store, 숙박=hotel/tourist tax.';
   var TRIP0=Date.UTC(2026,10,15);
   function p2(n){ return (n<10?'0':'')+n; }
   function today(){ var d=new Date(); return d.getFullYear()+'-'+p2(d.getMonth()+1)+'-'+p2(d.getDate()); }
@@ -10257,7 +10257,8 @@ var HM_F13="<!doctype html><html lang=\"ko\"><head><meta charset=\"utf-8\"><meta
     var low=String(text||'').toLowerCase(), nm=name.toLowerCase(), c='식비';
     if(/boulanger|p[âa]tisser|salon de th|glacier|chocolatier/.test(low)||/caf[ée]|coffee|glace/.test(nm))c='카페·간식';
     if(/restaurant|brasserie|bistro|couverts?\b|\btable\b/.test(low))c='식비';
-    if(/monoprix|carrefour|franprix|casino|intermarch|auchan|pharmacie|galeries lafayette|printemps|fnac|sephora|nb articles/.test(low))c='쇼핑';
+    if(/galeries lafayette|printemps|fnac|sephora|boutique|souvenir/.test(low))c='쇼핑';
+    if(/monoprix|monop'|carrefour|franprix|casino|intermarch|auchan|lidl|leclerc|picard|naturalia|u express|super u|sup[ée]rette|[ée]picerie|pharmacie|parapharmacie|nb articles|nombre d'articles/.test(low))c='마트·생필품';
     if(/mus[ée]e|billet|plein tarif|tarif r[ée]duit|ch[âa]teau|t[ée]l[ée]ph[ée]rique|monument/.test(low))c='관광·입장';
     if(/sncf|ratp|navigo|\btaxi\b|uber|parking|p[ée]age|carburant|gazole|sans plomb|autoroute|vinci/.test(low))c='교통';
     if(/h[ôo]tel|taxe de s[ée]jour|nuit[ée]e/.test(low))c='숙박';
@@ -10522,7 +10523,7 @@ var HM_F13="<!doctype html><html lang=\"ko\"><head><meta charset=\"utf-8\"><meta
   }
   window.__setMode=setMode;
   window.__hardReload=function(){ location.replace(location.pathname + '?v=' + Date.now()); };
-  window.__BUILD='2026.11.14.0010';
+  window.__BUILD='2026.11.14.0030';
   /* PIN 화면(#gate)은 결혼준비 영역 안에 있어서, 신혼여행부터 열면 숨은 영역과 함께 가려져 PIN 없이 신혼여행이 보였다.
      body 바로 아래로 옮겨 어느 탭에서든 화면 전체를 덮게 한다. */
   try{ var g=document.getElementById('gate'); if(g&&g.parentNode!==document.body)document.body.appendChild(g); }catch(e){}

@@ -265,6 +265,7 @@
   #modeSwitch button.on{ background:#26262E; color:#fff; }
   #modeSwitch .rl{ padding:8px 12px; font-size:15px; color:#8a8177; border-left:1px solid #E8E4DC; border-radius:0; }
   #modeSwitch .rl:hover{ color:#26262E; }
+  #gate{ z-index:1000 !important; }
 </style>
 </head>
 <body>
@@ -10521,7 +10522,10 @@ var HM_F13="<!doctype html><html lang=\"ko\"><head><meta charset=\"utf-8\"><meta
   }
   window.__setMode=setMode;
   window.__hardReload=function(){ location.replace(location.pathname + '?v=' + Date.now()); };
-  window.__BUILD='2026.11.13.2330';
+  window.__BUILD='2026.11.13.2345';
+  /* PIN 화면(#gate)은 결혼준비 영역 안에 있어서, 신혼여행부터 열면 숨은 영역과 함께 가려져 PIN 없이 신혼여행이 보였다.
+     body 바로 아래로 옮겨 어느 탭에서든 화면 전체를 덮게 한다. */
+  try{ var g=document.getElementById('gate'); if(g&&g.parentNode!==document.body)document.body.appendChild(g); }catch(e){}
   try{ setMode('hm'); }catch(e){}  /* 열면 신혼여행 탭부터 */
 })();
 </script>

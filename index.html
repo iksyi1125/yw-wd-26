@@ -10119,7 +10119,7 @@ var HM_F13="<!doctype html><html lang=\"ko\"><head><meta charset=\"utf-8\"><meta
   #ht-led .hl-tot .row{ display:flex; gap:8px; margin-top:12px; }
   #ht-led .hl-tot .row span{ flex:1; min-width:0; background:rgba(255,255,255,.1); border-radius:10px; padding:8px 10px; font-size:11.5px; color:#c9bda6; }
   #ht-led .hl-tot .row b{ display:block; color:#fff; font-size:15px; margin-top:2px; white-space:nowrap; }
-  #ht-led .hl-ws{ display:grid; grid-template-columns:repeat(3,1fr); gap:8px; margin-bottom:8px; }
+  #ht-led .hl-ws{ display:grid; grid-template-columns:repeat(2,1fr); gap:8px; margin-bottom:8px; }
   #ht-led .hl-w{ background:#fff; border:1px solid #e8e1d6; border-radius:13px; padding:10px 11px; min-width:0; }
   #ht-led .hl-w .n{ font-size:11.5px; color:#6f675e; font-weight:700; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
   #ht-led .hl-w .b{ font-size:16px; font-weight:800; margin-top:3px; white-space:nowrap; letter-spacing:-.02em; }
@@ -10193,10 +10193,12 @@ var HM_F13="<!doctype html><html lang=\"ko\"><head><meta charset=\"utf-8\"><meta
            set:function(k,v){ try{localStorage.setItem(k,JSON.stringify(v));}catch(e){} } };
   var esc=function(s){return String(s==null?'':s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');};
   var KEY='hm2026-led';
-  /* 시작 금액 (2026-11-13 기준, 현금 = 지폐 4,070 + 동전 5.52) — 앱에서 "시작 금액 수정"으로 바꿀 수 있음.
+  /* 시작 금액 (2026-11-13 기준, 현금 = 지폐 4,070 + 동전 5.52 · 하나머니 = 하나머니 2,019.22 + 외화통장 1,700 을 합친 것) — 앱에서 "시작 금액 수정"으로 바꿀 수 있음.
      여기 값을 바꿀 때는 SEED_U 도 그때 시각(ms)으로 올릴 것: 그보다 먼저 저장된 시작 금액을 이 값으로 덮어씀 (내역은 그대로) */
-  var SEED_U=1794556418026;
-  var SEEDW=[{id:'cash',n:'현금',ic:'💶',init:4075.52},{id:'hana',n:'하나머니',ic:'💳',init:2019.22},{id:'fx',n:'외화통장',ic:'🏦',init:1700},{id:'card',n:'다른 카드',ic:'🪪',init:null}];
+  var SEED_U=1794556701471;
+  var ALIAS={fx:'hana'};   /* 예전 '외화통장' 지갑은 하나머니로 합침 — 옛 내역의 fx 는 hana 로 읽음 */
+  function wid(id){ return ALIAS[id]||id; }
+  var SEEDW=[{id:'cash',n:'현금',ic:'💶',init:4075.52},{id:'hana',n:'하나머니',ic:'💳',init:3719.22},{id:'card',n:'다른 카드',ic:'🪪',init:null}];
   var CATS=[['식비','🍽'],['카페·간식','☕'],['교통','🚇'],['관광·입장','🎟'],['쇼핑','🛍'],['숙박','🏨'],['기타','📌']];
   var TESS='https://cdn.jsdelivr.net/npm/tesseract.js@5.1.1/dist/tesseract.min.js';
   var TRIP0=Date.UTC(2026,10,15);
@@ -10260,12 +10262,14 @@ var HM_F13="<!doctype html><html lang=\"ko\"><head><meta charset=\"utf-8\"><meta
     parse:parseReceipt,
     load:function(){ var d=LS.get(KEY,null); if(!d||typeof d!=='object')d={};
       if(!d.w||!Array.isArray(d.w.list)||!d.w.list.length)d.w={u:SEED_U,list:JSON.parse(JSON.stringify(SEEDW))};
-      else if((d.w.u||0)<SEED_U){ SEEDW.forEach(function(s){ var w=null; d.w.list.forEach(function(x){ if(x.id===s.id)w=x; }); if(w)w.init=s.init; else d.w.list.push(JSON.parse(JSON.stringify(s))); });
-        d.w.u=SEED_U; LS.set(KEY,d); }
+      else if((d.w.u||0)<SEED_U){ d.w={u:SEED_U,list:JSON.parse(JSON.stringify(SEEDW))}; LS.set(KEY,d); }
       if(!d.e||typeof d.e!=='object')d.e={}; this.d=d; },
     persist:function(){ LS.set(KEY,this.d); },
     wal:function(id){ var L=this.d.w.list; for(var i=0;i<L.length;i++)if(L[i].id===id)return L[i]; return null; },
-    items:function(){ var out=[]; for(var id in this.d.e){ var e=this.d.e[id]; if(e&&!e.del)out.push(e); }
+    items:function(){ var out=[]; for(var id in this.d.e){ var e=this.d.e[id]; if(!e||e.del)continue;
+        if(ALIAS[e.w]||ALIAS[e.to]){ var c={}; for(var k in e)c[k]=e[k]; c.w=wid(e.w); if(e.to)c.to=wid(e.to); e=c; }
+        if(e.k==='m'&&e.w===e.to)continue;   /* 합쳐진 지갑끼리의 옛 이동은 의미가 없어 숨김 */
+        out.push(e); }
       out.sort(function(a,b){ return a.d<b.d?1:a.d>b.d?-1:(b.u||0)-(a.u||0); }); return out; },
     calc:function(){ var bal={}, out={}, cat={}, spent=0, tod=0, td=today();
       this.d.w.list.forEach(function(w){ bal[w.id]=(w.init==null?null:cents(w.init)); out[w.id]=0; });
@@ -10279,7 +10283,7 @@ var HM_F13="<!doctype html><html lang=\"ko\"><head><meta charset=\"utf-8\"><meta
     render:function(){ var el=document.getElementById('ht-led'); if(!el)return; var self=this, c=this.calc(), its=this.items();
       var sm=this.st==='ok'?['● 두 폰 동기화 중','#4a7c59']:this.st==='err'?['⚠ 가계부 동기화 권한 없음 — 이 폰에만 저장 중','#b5424e']:this.st==='wait'?['동기화 연결 중…','#a89e8d']:['이 폰에만 저장 중 (동기화 꺼짐)','#a89e8d'];
       var h='<div class="hl-sync" style="color:'+sm[1]+'">'+sm[0]+'</div>';
-      h+='<div class="hl-tot"><div class="l">남은 돈 (현금 + 하나머니 + 외화통장)</div><div class="g'+(c.left<0?' neg':'')+'">'+fmt(c.left)+'</div><div class="k">'+won(c.left)+'</div>'+
+      h+='<div class="hl-tot"><div class="l">남은 돈 (현금 + 하나머니)</div><div class="g'+(c.left<0?' neg':'')+'">'+fmt(c.left)+'</div><div class="k">'+won(c.left)+'</div>'+
          '<div class="row"><span>오늘 쓴 돈<b>'+fmt(c.today)+'</b></span><span>지금까지 쓴 돈<b>'+fmt(c.spent)+'</b></span></div></div>';
       h+='<div class="hl-ws">';
       this.d.w.list.forEach(function(w){ if(w.init==null)return; var b=c.bal[w.id];
@@ -10287,7 +10291,7 @@ var HM_F13="<!doctype html><html lang=\"ko\"><head><meta charset=\"utf-8\"><meta
       h+='</div>';
       var cardOut=0; this.d.w.list.forEach(function(w){ if(w.init==null)cardOut+=(c.out[w.id]||0); });
       if(cardOut)h+='<div class="hl-card">🪪 다른 카드로 낸 돈 <b>'+fmt(cardOut)+'</b> (위 잔액에서는 빠지지 않음)</div>';
-      h+='<div class="hl-acts"><button class="pri" onclick="HL.open()">＋ 지출 입력</button><button onclick="HL.pick()">📷 영수증</button><button onclick="HL.open(null,{k:\'m\'})">⇄ 이동·충전</button></div>';
+      h+='<div class="hl-acts"><button class="pri" onclick="HL.open()">＋ 지출 입력</button><button onclick="HL.pick()">📷 영수증</button><button onclick="HL.open(null,{k:\'m\'})">🏧 ATM 인출</button></div>';
       var cs=[]; for(var k in c.cat)cs.push([k,c.cat[k]]); cs.sort(function(a,b){return b[1]-a[1];});
       if(cs.length){ h+='<div class="hl-cats">'; cs.forEach(function(x){ h+='<span>'+catIcon(x[0])+' '+esc(x[0])+' '+fmt(x[1])+'</span>'; }); h+='</div>'; }
       if(!its.length)h+='<div class="hl-empty">아직 내역이 없습니다.<br>＋ 지출 입력을 누르거나 📷 영수증을 찍어 보세요.</div>';
@@ -10295,7 +10299,7 @@ var HM_F13="<!doctype html><html lang=\"ko\"><head><meta charset=\"utf-8\"><meta
       its.forEach(function(e){
         if(e.d!==cur){ cur=e.d; h+='<div class="hl-dh"><span>'+esc(dlabel(e.d))+'</span>'+(sums[e.d]?'지출 '+fmt(sums[e.d]):'')+'</div>'; }
         var w=self.wal(e.w), to=self.wal(e.to), wn=w?w.n:'?', ic, t1, t2, am;
-        if(e.k==='m'){ ic='⇄'; t1=e.t||'이동·충전'; t2=wn+' → '+(to?to.n:'?'); am='<div class="am mv">'+fmt(cents(e.a))+'</div>'; }
+        if(e.k==='m'){ ic='⇄'; t1=e.t||(e.w==='hana'&&e.to==='cash'?'ATM 인출':'이동'); t2=wn+' → '+(to?to.n:'?'); am='<div class="am mv">'+fmt(cents(e.a))+'</div>'; }
         else if(e.k==='i'){ ic='➕'; t1=e.t||'입금'; t2=wn+'에 들어옴'; am='<div class="am in">+'+fmt(cents(e.a))+'</div>'; }
         else { ic=catIcon(e.c); t1=e.t||e.c||'지출'; t2=(e.c||'기타')+' · '+wn+(e.src==='r'?' · 📷':''); am='<div class="am">'+fmt(-cents(e.a))+'</div>'; }
         h+='<div class="hl-it" onclick="HL.open(\''+esc(e.id)+'\')"><div class="ic">'+ic+'</div><div class="tx"><div class="t1">'+esc(t1)+'</div><div class="t2">'+esc(t2)+'</div></div>'+am+'</div>'; });
@@ -10305,16 +10309,16 @@ var HM_F13="<!doctype html><html lang=\"ko\"><head><meta charset=\"utf-8\"><meta
     /* ── 입력 창 ── */
     show:function(){ document.getElementById('hl-sheet').classList.add('on'); document.body.style.overflow='hidden'; },
     close:function(){ document.getElementById('hl-sheet').classList.remove('on'); document.body.style.overflow=''; this._f=null; this._scan=(this._scan||0)+1; },
-    blank:function(){ return {id:null,k:'x',a:'',w:'cash',to:'hana',c:'식비',t:'',d:today(),cands:null,raw:'',msg:'',src:''}; },
+    blank:function(){ var lw=LS.get('hm2026-ledw','cash'); if(!this.wal(lw))lw='cash'; return {id:null,k:'x',a:'',w:lw,to:'cash',c:'식비',t:'',d:today(),cands:null,raw:'',msg:'',src:''}; },
     open:function(id,preset){ var f=this.blank(), e=id&&this.d.e[id];
-      if(e){ f.id=e.id; f.k=e.k||'x'; f.a=(+e.a||0).toFixed(2); f.w=e.w; f.to=e.to||'hana'; f.c=e.c||'식비'; f.t=e.t||''; f.d=e.d||today(); f.src=e.src||''; }
+      if(e){ f.id=e.id; f.k=e.k||'x'; f.a=(+e.a||0).toFixed(2); f.w=wid(e.w); f.to=wid(e.to||'cash'); f.c=e.c||'식비'; f.t=e.t||''; f.d=e.d||today(); f.src=e.src||''; }
       if(preset)for(var k in preset)f[k]=preset[k];
-      if(f.k==='m'&&!e&&!(preset&&preset.w)){ f.w='fx'; f.to='hana'; }
+      if(f.k==='m'&&!e&&!(preset&&preset.w)){ f.w='hana'; f.to='cash'; }
       this._f=f; this.form(); this.show();
       if(!e&&!f.a){ var a=document.getElementById('hl-a'); if(a)try{ a.focus(); }catch(x){} } },
     sync:function(){ var f=this._f; if(!f)return; var g=function(i){ var x=document.getElementById(i); return x?x.value:null; };
       var a=g('hl-a'), t=g('hl-t'), d=g('hl-d'); if(a!=null)f.a=a; if(t!=null)f.t=t; if(d)f.d=d; },
-    set:function(k,v){ this.sync(); this._f[k]=v; if(k==='k'){ this._f.msg=''; if(v==='m'&&this._f.w===this._f.to){ this._f.w='fx'; this._f.to='hana'; } } this.form(); },
+    set:function(k,v){ this.sync(); this._f[k]=v; if(k==='k'){ this._f.msg=''; if(v==='m'&&(this._f.w===this._f.to||!this.wal(this._f.w)||this.wal(this._f.w).init==null)){ this._f.w='hana'; this._f.to='cash'; } if(v==='i'&&this.wal(this._f.w)&&this.wal(this._f.w).init==null)this._f.w='hana'; } this.form(); },
     setAmt:function(v){ this.sync(); var f=this._f, old=parseAmt(f.a); f.a=(+v).toFixed(2);
       if(f.cands){ f.cands=f.cands.filter(function(x){return x!==v;}); if(old>0)f.cands.unshift(old); } this.form(); },
     form:function(){ var f=this._f, W=this.d.w.list, c=this.calc();
@@ -10322,12 +10326,12 @@ var HM_F13="<!doctype html><html lang=\"ko\"><head><meta charset=\"utf-8\"><meta
         return '<button class="'+(w.id===cur?'on':'')+'" onclick="HL.set(\''+key+'\',\''+w.id+'\')">'+w.ic+' '+esc(w.n)+(w.init!=null?'<small>'+fmt(c.bal[w.id])+'</small>':'')+'</button>'; }).join('')+'</div>'; };
       var h='<div class="hd"><b>'+(f.id?'내역 수정':f.src==='r'?'영수증으로 입력':'새 내역')+'</b><button onclick="HL.close()">✕</button></div>';
       if(f.msg)h+='<div class="msg'+(f.err?' err':'')+'">'+esc(f.msg)+'</div>';
-      h+='<div class="seg">'+[['x','지출'],['m','이동·충전'],['i','입금']].map(function(s){ return '<button class="'+(f.k===s[0]?'on':'')+'" onclick="HL.set(\'k\',\''+s[0]+'\')">'+s[1]+'</button>'; }).join('')+'</div>';
+      h+='<div class="seg">'+[['x','지출'],['m','ATM 인출'],['i','입금']].map(function(s){ return '<button class="'+(f.k===s[0]?'on':'')+'" onclick="HL.set(\'k\',\''+s[0]+'\')">'+s[1]+'</button>'; }).join('')+'</div>';
       h+='<div class="amt" id="hl-amt"><span>€</span><input id="hl-a" type="text" inputmode="decimal" autocomplete="off" placeholder="0.00" value="'+esc(f.a)+'"></div>';
       if(f.cands&&f.cands.length)h+='<div class="cands">영수증의 다른 금액'+f.cands.map(function(v){ return '<button onclick="HL.setAmt('+v+')">'+v.toFixed(2)+'</button>'; }).join('')+'</div>';
       if(f.k==='x'){ h+='<div class="lb">무엇으로 냈나요</div>'+chips('w',f.w);
         h+='<div class="lb">분류</div><div class="chips">'+CATS.map(function(x){ return '<button class="'+(x[0]===f.c?'on':'')+'" onclick="HL.set(\'c\',\''+x[0]+'\')">'+x[1]+' '+x[0]+'</button>'; }).join('')+'</div>'; }
-      else if(f.k==='m'){ h+='<div class="lb">어디에서</div>'+chips('w',f.w,true)+'<div class="lb">어디로 (예: 외화통장 → 하나머니 충전, 하나머니 → 현금 인출)</div>'+chips('to',f.to,true); }
+      else if(f.k==='m'){ h+='<div class="lb">어디에서</div>'+chips('w',f.w,true)+'<div class="lb">어디로 (하나머니 → 현금 = ATM 인출 · 수수료가 붙으면 지출로 따로 입력)</div>'+chips('to',f.to,true); }
       else { h+='<div class="lb">어디로 들어왔나요 (환불·원화로 새로 충전 등)</div>'+chips('w',f.w,true); }
       h+='<div class="lb">'+(f.k==='x'?'가게 · 메모':'메모')+'</div><input class="in" id="hl-t" type="text" autocomplete="off" placeholder="'+(f.k==='x'?'예: 점심 Le Ju\'':'선택')+'" value="'+esc(f.t)+'">';
       h+='<div class="lb">날짜</div><input class="in" id="hl-d" type="date" value="'+esc(f.d)+'">';
@@ -10339,7 +10343,7 @@ var HM_F13="<!doctype html><html lang=\"ko\"><head><meta charset=\"utf-8\"><meta
       if(f.k==='m'&&f.w===f.to){ f.msg='보내는 곳과 받는 곳이 같습니다.'; f.err=1; this.form(); return; }
       if(f.k!=='x'){ var w=this.wal(f.w); if(w&&w.init==null){ f.msg='"다른 카드"는 잔액을 따로 세지 않아 이동·입금에 쓸 수 없습니다.'; f.err=1; this.form(); return; } }
       var e={id:f.id||newId(), u:Date.now(), k:f.k, a:a, w:f.w, d:f.d||today(), t:String(f.t||'').trim().slice(0,80)};
-      if(f.k==='x')e.c=f.c; if(f.k==='m')e.to=f.to; if(f.src)e.src=f.src;
+      if(f.k==='x'){ e.c=f.c; LS.set('hm2026-ledw',f.w); } if(f.k==='m')e.to=f.to; if(f.src)e.src=f.src;
       this.put(e); this.close(); this.render(); },
     del:function(){ var f=this._f; if(!f||!f.id)return; if(!confirm('이 내역을 삭제할까요?'))return;
       this.put({id:f.id,u:Date.now(),del:1}); this.close(); this.render(); },
@@ -10365,6 +10369,7 @@ var HM_F13="<!doctype html><html lang=\"ko\"><head><meta charset=\"utf-8\"><meta
         var l=D.e[id]; if(!l||(r.u||0)>(l.u||0)){ D.e[id]=r; changed=true; } }
       for(var lid in D.e){ var le=D.e[lid]; if(!rp[lid]||(le.u||0)>(rp[lid].u||0))push['e/'+lid]=JSON.stringify(le); }
       var rw=null; try{ rw=v.w?(typeof v.w==='string'?JSON.parse(v.w):v.w):null; }catch(x){}
+      if(rw&&Array.isArray(rw.list))rw.list=rw.list.filter(function(x){ return x&&!ALIAS[x.id]; });
       if(rw&&Array.isArray(rw.list)&&rw.list.length&&(rw.u||0)>(D.w.u||0)){ D.w=rw; changed=true; }
       else if(!rw||(D.w.u||0)>(rw.u||0))push.w=JSON.stringify(D.w);
       if(changed)this.persist();
@@ -10429,7 +10434,7 @@ var HM_F13="<!doctype html><html lang=\"ko\"><head><meta charset=\"utf-8\"><meta
   }
   window.__setMode=setMode;
   window.__hardReload=function(){ location.replace(location.pathname + '?v=' + Date.now()); };
-  window.__BUILD='2026.11.13.1830';
+  window.__BUILD='2026.11.13.1930';
   try{ setMode('hm'); }catch(e){}  /* 열면 신혼여행 탭부터 */
 })();
 </script>

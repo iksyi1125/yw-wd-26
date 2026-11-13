@@ -9623,8 +9623,8 @@ var HM_F13="<!doctype html><html lang=\"ko\"><head><meta charset=\"utf-8\"><meta
   var FX_FALLBACK={EUR:1593, USD:1360, date:'2026-09-20(기본값)'};
 
   /* ── 준비물 시드 (PREP_VER 올리면 빠진 항목만 추가, 체크·수정은 유지) ── */
-  var PREP_VER=11;
-  var PREP_DROP=['Chez Paul (11/24 19:30) · Vins des Pyrénées (11/23 19:00) 예약','상비약 — 감기·소화제·진통제·밴드·멀미약(베르동 산길)','오랑주리·오르세 (11/25) 온라인 시간지정 예매','Chez Paul (11/24 저녁) · Vins des Pyrénées (11/23) 예약','캐리어 2개 — Transavia 위탁 30kg/인 · TGV 90×70×50cm','아시아나 체크인 때 혜원 수하물 확인','귀국편(OZ502)은 짐 늘어도 됨','Ubigi 앱 → 프랑스 25GB/30일 (€19) 2인 구매·설치','Viber Out 또는 Yolla 설치 → $5 충전 → 테스트 통화','여행자보험 가입 → 증권번호 저장','픽업 시 스노우체인 또는 스노우삭스 요청','자차 면책금 확인 → 카드사 렌터카 보험 또는 현장 풀커버','안시역 일요일 08:00 반납 가능 여부 바우처 확인','★ 오랑주리 11/25 14:00 예매 (€12.50)','★ 오페라 가르니에 11/24 10:30 예매 (현장판매 없음 · 비EU €25)','★ 오르세 11/26 09:30 예매'];
+  var PREP_VER=12;
+  var PREP_DROP=['Don Juan II 취소 조건 확인','Chez Paul (11/24 19:30) · Vins des Pyrénées (11/23 19:00) 예약','상비약 — 감기·소화제·진통제·밴드·멀미약(베르동 산길)','오랑주리·오르세 (11/25) 온라인 시간지정 예매','Chez Paul (11/24 저녁) · Vins des Pyrénées (11/23) 예약','캐리어 2개 — Transavia 위탁 30kg/인 · TGV 90×70×50cm','아시아나 체크인 때 혜원 수하물 확인','귀국편(OZ502)은 짐 늘어도 됨','Ubigi 앱 → 프랑스 25GB/30일 (€19) 2인 구매·설치','Viber Out 또는 Yolla 설치 → $5 충전 → 테스트 통화','여행자보험 가입 → 증권번호 저장','픽업 시 스노우체인 또는 스노우삭스 요청','자차 면책금 확인 → 카드사 렌터카 보험 또는 현장 풀커버','안시역 일요일 08:00 반납 가능 여부 바우처 확인','★ 오랑주리 11/25 14:00 예매 (€12.50)','★ 오페라 가르니에 11/24 10:30 예매 (현장판매 없음 · 비EU €25)','★ 오르세 11/26 09:30 예매'];
   var PREP_DUE=[
     {iso:'2026-11-14',d:'11/14',t:'숙소 무료취소 1차 마감 — 오를리·아비뇽 (23:59 CET)'},
     {iso:'2026-11-15',d:'11/15',t:'니스 Mercure 무료취소 마감 (23:59 CET, 이후 첫 1박)'},
@@ -9701,6 +9701,8 @@ var HM_F13="<!doctype html><html lang=\"ko\"><head><meta charset=\"utf-8\"><meta
     {t:'🚗 렌터카',items:[
       {t:'Alamo 니스역 지점에 체인/스노우삭스 미리 요청 (전화)',m:'+33 4 93 16 01 48 · 34 Av. Auber (역 앞 Thiers 건너 Auber, 주차장 입구 지나 왼쪽) · 예약 B41255249 · Loi Montagne 11/1~3/31 오트사부아 의무'},
       {t:'차량 인수 시 360도 사진·영상 (흠집)'},
+      {t:'11/19 픽업 직후 번호판을 아비뇽 호텔에 보내기',m:'contact@la-divine-comedie.com 또는 +33 6 77 06 85 40 · CIRAPS 차단봉 통과 등록용 · 공영 Parking du Palais des Papes(Rue Ferruce)에 대기로 하면 안 보내도 됨'},
+      {t:'아비뇽 호텔 진입 경로 (11/20) — 반드시 Porte de la Ligne로 들어가기',m:'① Porte de la Ligne → ② Rue du Rempart de la Ligne → ③ Rue Banasterie (꺾는 곳이 좁음) → ④ CIRAPS 차단봉: 예약 확인서 보여주기 · 봉이 안 내려가면 옆 기둥(빨간 불) 버튼 누르고 이름·예약번호 73547762864201·번호판 말하기 → ⑤ Rue Sainte-Catherine → ⑥ 26번지에 서서 +33 6 77 06 85 40 전화 · 호텔 주차 €20/박 · 구시가는 내비가 부정확하다고 함 · 프런트 08:30~20:30 · 지도 PDF는 숙소 Invoice 폴더'},
       {t:'카운터 풀커버(SuperCover 등) 거절 — Full Coverage 가입돼 있음',m:'EconomyBookings Full Coverage: 면책금·타이어·유리·하부·키·견인 최대 €1,700 환급 (사후 청구 30일 내). 보증금은 카드에 그대로 잡힘',d:true},
       {t:'바우처(11/16 도착)에서 면책금·편도요금·현장결제액 확인',m:'면책금이 €1,700 넘으면 차액은 본인 부담 · 공급사 Alamo'},
       {t:'톨게이트 카드 레인 "CB" · 현금 레인 동전'},
@@ -9715,7 +9717,7 @@ var HM_F13="<!doctype html><html lang=\"ko\"><head><meta charset=\"utf-8\"><meta
       {t:'★ 오르세 11/26 14:30 예매',m:'musee-orsay.fr'},
       {t:'Vins des Pyrénées (11/23 19:00) 예약'},
       {t:'11/24(화) 저녁 식당 정하기',m:'Chez Paul은 미확정 (+33 1 47 00 34 57) · 책자 식당 탭 참고'},
-      {t:'Don Juan II 취소 조건 확인',m:'booking.donjuan2.fr'},
+      {t:'Don Juan II — €500 전액 결제완료 (음료만 배에서 계산)',m:'11/26 승선 19:45~20:00 · 20:15 정시 출항 · Port Debilly · 변경·취소는 48시간 전까지 reservations.dj2@ydp.fr / +33 1 83 77 44 40',d:true},
       {t:'아시아나 좌석 지정 · 기내식'},
       {t:'11/8~9 프랑스 시위·파업 현황 재점검'},
       {t:'11/12 니스 날씨 → 에즈 정원(16:30 폐장) 요일 조정'},
@@ -10523,7 +10525,7 @@ var HM_F13="<!doctype html><html lang=\"ko\"><head><meta charset=\"utf-8\"><meta
   }
   window.__setMode=setMode;
   window.__hardReload=function(){ location.replace(location.pathname + '?v=' + Date.now()); };
-  window.__BUILD='2026.11.14.0030';
+  window.__BUILD='2026.11.14.0900';
   /* PIN 화면(#gate)은 결혼준비 영역 안에 있어서, 신혼여행부터 열면 숨은 영역과 함께 가려져 PIN 없이 신혼여행이 보였다.
      body 바로 아래로 옮겨 어느 탭에서든 화면 전체를 덮게 한다. */
   try{ var g=document.getElementById('gate'); if(g&&g.parentNode!==document.body)document.body.appendChild(g); }catch(e){}

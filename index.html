@@ -10201,7 +10201,7 @@ var HM_F13="<!doctype html><html lang=\"ko\"><head><meta charset=\"utf-8\"><meta
   var SEEDW=[{id:'cash',n:'현금',ic:'💶',init:4075.52},{id:'hana',n:'하나머니',ic:'💳',init:3719.22},{id:'card',n:'다른 카드',ic:'🪪',init:null}];
   var CATS=[['식비','🍽'],['카페·간식','☕'],['교통','🚇'],['관광·입장','🎟'],['쇼핑','🛍'],['숙박','🏨'],['기타','📌']];
   var TESS='https://cdn.jsdelivr.net/npm/tesseract.js@5.1.1/dist/tesseract.min.js';
-  var AK='hm2026-akey', AM='hm2026-amodel', AI_API='https://api.anthropic.com', AI_MODEL='claude-haiku-4-5';
+  var AK='hm2026-akey', AKU='hm2026-akeyu', AKS='hm2026-akeysh', AM='hm2026-amodel', AI_API='https://api.anthropic.com', AI_MODEL='claude-haiku-4-5';
   var AI_PROMPT='This photo is a shop/restaurant receipt, most likely from France (today is {TODAY}). Read it and reply with ONLY one JSON object, no other text:\n'+
     '{"is_receipt": true|false, "merchant": "shop name as people call it, max 30 chars, empty if unreadable", "total": final amount actually paid including tax as a number (not subtotal, not cash handed over, not change), '+
     '"currency": "EUR" or other ISO code, "date": "YYYY-MM-DD" or "", "category": one of "식비","카페·간식","교통","관광·입장","쇼핑","숙박","기타", '+
@@ -10378,6 +10378,11 @@ var HM_F13="<!doctype html><html lang=\"ko\"><head><meta charset=\"utf-8\"><meta
       if(rw&&Array.isArray(rw.list))rw.list=rw.list.filter(function(x){ return x&&!ALIAS[x.id]; });
       if(rw&&Array.isArray(rw.list)&&rw.list.length&&(rw.u||0)>(D.w.u||0)){ D.w=rw; changed=true; }
       else if(!rw||(D.w.u||0)>(rw.u||0))push.w=JSON.stringify(D.w);
+      var rk=null; try{ rk=v.k?(typeof v.k==='string'?JSON.parse(v.k):v.k):null; }catch(x){}
+      var lu=+LS.get(AKU,0)||0, lsh=!!LS.get(AKS,false), kch=false;
+      if(rk&&(+rk.u||0)>lu){ if(rk.k){ LS.set(AK,String(rk.k)); LS.set(AKS,true); } else { try{ localStorage.removeItem(AK); localStorage.removeItem(AM); }catch(x){} LS.set(AKS,false); } LS.set(AKU,+rk.u); kch=true; }
+      else if(lsh&&this.aiKey()&&(!rk||lu>(+rk.u||0)))push.k=JSON.stringify({k:this.aiKey(),u:lu||1});
+      if(kch){ changed=true; if(this._f&&this._f.aiform)this.openAI('다른 폰에서 바뀐 설정을 받았습니다.'); }
       if(changed)this.persist();
       var n=0; for(var k in push)n++;
       if(n&&ref){ try{ ref.update(push).catch(function(){ self.fail(); }); }catch(x){} }
@@ -10462,19 +10467,27 @@ var HM_F13="<!doctype html><html lang=\"ko\"><head><meta charset=\"utf-8\"><meta
         function(e){ viaOcr((e&&e.ko)||'오류'); }); },
 
     /* ── Claude 설정 창 ── */
-    openAI:function(msg,bad){ var k=this.aiKey();
+    openAI:function(msg,bad){ var k=this.aiKey(), sh=!!LS.get(AKS,false);
       var h='<div class="hd"><b>🤖 Claude로 영수증 읽기</b><button onclick="HL.close()">✕</button></div>'+
         (msg?'<div class="msg'+(bad?' err':'')+'">'+esc(msg)+'</div>':'')+
-        '<div class="msg" style="font-weight:500">API 키를 넣으면 영수증 사진을 Claude가 읽어 가게·금액·날짜·분류를 채웁니다. 키는 <b>이 폰에만</b> 저장되고 다른 폰과 동기화되지 않습니다. 영수증 사진은 읽을 때만 Claude(Anthropic)로 전송됩니다.</div>'+
-        '<div class="lb">상태</div><div style="font-size:14px;font-weight:700;margin:0 2px 4px">'+(k?'✅ 키 저장됨 (…'+esc(k.slice(-4))+')':'키 없음 — 기본 방식(폰 안에서 글자 인식)으로 읽는 중')+'</div>'+
+        '<div class="msg" style="font-weight:500">API 키를 넣으면 영수증 사진을 Claude가 읽어 가게·금액·날짜·분류를 채웁니다. 키는 GitHub에 올라가지 않고 폰에 저장됩니다. "두 폰이 같이 쓰기"를 켜면 우리 동기화 방(일정·준비물과 같은 곳)을 통해 다른 폰에도 자동으로 들어갑니다. 영수증 사진은 읽을 때만 Claude(Anthropic)로 전송됩니다.</div>'+
+        '<div class="lb">상태</div><div style="font-size:14px;font-weight:700;margin:0 2px 4px">'+(k?'✅ 키 저장됨 (…'+esc(k.slice(-4))+') · '+(sh?(this.st==='ok'?'두 폰 공유 중':'공유 켜짐 — 동기화 연결 대기'):'이 폰에만'):'키 없음 — 기본 방식(폰 안에서 글자 인식)으로 읽는 중')+'</div>'+
         '<div class="lb">'+(k?'키 바꾸기':'API 키 붙여넣기')+'</div><input class="in" id="hl-key" type="password" autocomplete="off" autocapitalize="off" autocorrect="off" spellcheck="false" placeholder="sk-ant-…">'+
+        '<label style="display:flex;align-items:center;gap:9px;margin:12px 2px 0;font-size:14px;font-weight:700"><input type="checkbox" id="hl-share" style="width:20px;height:20px"'+((k?sh:true)?' checked':'')+'> 두 폰이 같이 쓰기 (한 번만 넣으면 됨)</label>'+
         '<div class="btns"><button onclick="HL.close()">닫기</button>'+(k?'<button class="del" onclick="HL.clearAI()">키 지우기</button><button onclick="HL.testAI()">연결 테스트</button>':'')+'<button class="save" onclick="HL.saveAI()">저장</button></div>'+
         '<details><summary>키는 어디서 받나요</summary><pre style="font-family:inherit;font-size:12px">1) 컴퓨터에서 claude.ai → Settings → Billing → API credits 에서 Console 조직 연결 (Max 플랜 월 $100 크레딧)\n2) platform.claude.com → API keys 에서 키 만들기\n3) 그 키를 여기에 붙여넣고 저장 → 연결 테스트\n\n키를 잃어버렸거나 폰을 분실하면 platform.claude.com 에서 그 키를 삭제하면 됩니다.</pre></details>';
       this._f={aiform:1}; document.getElementById('hl-box').innerHTML=h; this.show(); },
-    saveAI:function(){ var i=document.getElementById('hl-key'), v=i?String(i.value||'').trim():''; if(!v){ this.openAI('키를 붙여넣은 뒤 저장을 눌러 주세요.',1); return; }
-      if(!/^sk-ant-[\w\-]{20,}$/.test(v)){ this.openAI('키 형식이 아닙니다 (sk-ant- 로 시작해야 합니다).',1); return; }
-      LS.set(AK,v); LS.set(AM,''); this.openAI('저장했습니다. "연결 테스트"를 눌러 확인해 보세요.'); this.render(); },
-    clearAI:function(){ if(!confirm('이 폰에 저장된 API 키를 지울까요?'))return; try{ localStorage.removeItem(AK); localStorage.removeItem(AM); }catch(x){} this.openAI('키를 지웠습니다. 기본 방식으로 읽습니다.'); this.render(); },
+    shareKey:function(k,u){ var self=this; if(!ref)return false; try{ ref.child('k').set(JSON.stringify({k:k,u:u})).catch(function(){ self.fail(); }); return true; }catch(x){ return false; } },
+    saveAI:function(){ var i=document.getElementById('hl-key'), v=i?String(i.value||'').trim():'', c=document.getElementById('hl-share'), sh=!!(c&&c.checked), old=this.aiKey(), was=!!LS.get(AKS,false);
+      if(!v&&!old){ this.openAI('키를 붙여넣은 뒤 저장을 눌러 주세요.',1); return; }
+      if(v&&!/^sk-ant-[\w\-]{20,}$/.test(v)){ this.openAI('키 형식이 아닙니다 (sk-ant- 로 시작해야 합니다).',1); return; }
+      var u=Date.now(), k=v||old; if(v){ LS.set(AK,v); LS.set(AM,''); } LS.set(AKU,u); LS.set(AKS,sh);
+      var note=''; if(sh){ note=this.shareKey(k,u)&&this.st==='ok'?' 다른 폰에도 자동으로 들어갑니다.':' (동기화가 꺼져 있어 지금은 이 폰에만 저장됐습니다)'; }
+      else if(was){ this.shareKey('',u); note=' 공유를 껐습니다 — 다른 폰에서는 키가 지워집니다.'; }
+      this.openAI((v?'저장했습니다.':'설정을 바꿨습니다.')+note+' "연결 테스트"로 확인해 보세요.'); this.render(); },
+    clearAI:function(){ var sh=!!LS.get(AKS,false); if(!confirm(sh?'API 키를 지울까요? 공유 중이라 다른 폰에서도 지워집니다.':'이 폰에 저장된 API 키를 지울까요?'))return;
+      var u=Date.now(); try{ localStorage.removeItem(AK); localStorage.removeItem(AM); }catch(x){} LS.set(AKU,u); if(sh)this.shareKey('',u); LS.set(AKS,false);
+      this.openAI('키를 지웠습니다. 기본 방식으로 읽습니다.'); this.render(); },
     testAI:function(){ var self=this, k=this.aiKey(); if(!k)return; this.openAI('연결 확인 중…');
       this.aiSend(k,[{type:'text',text:'Reply with exactly: OK'}],8).then(function(){ if(self._f&&self._f.aiform)self.openAI('✅ 연결됐습니다. 이제 📷 영수증을 누르면 Claude가 읽습니다. (모델: '+(LS.get(AM,'')||AI_MODEL)+')'); },
         function(e){ if(self._f&&self._f.aiform)self.openAI('연결 실패 — '+((e&&e.ko)||'오류')+(e&&e.message&&e.message!=='network'?' · '+String(e.message).slice(0,120):''),1); }); },
@@ -10500,7 +10513,7 @@ var HM_F13="<!doctype html><html lang=\"ko\"><head><meta charset=\"utf-8\"><meta
   }
   window.__setMode=setMode;
   window.__hardReload=function(){ location.replace(location.pathname + '?v=' + Date.now()); };
-  window.__BUILD='2026.11.13.2100';
+  window.__BUILD='2026.11.13.2200';
   try{ setMode('hm'); }catch(e){}  /* 열면 신혼여행 탭부터 */
 })();
 </script>

@@ -10267,6 +10267,10 @@ var HM_F13="<!doctype html><html lang=\"ko\"><head><meta charset=\"utf-8\"><meta
   var room=null; try{ room=localStorage.getItem('wp-room'); }catch(e){}
   var FB=(typeof firebase!=='undefined' && !!room), ref=null;
   if(FB){ try{ ref=firebase.database().ref('honeymoon/'+room+'/led'); }catch(e){ FB=false; ref=null; } }
+  /* 이 기기에서 PIN 을 처음 넣은 직후에는 방 정보가 페이지 로드 뒤에 생겨서 신혼여행 쪽 동기화(일정·준비물·가계부)가 꺼진 채로 남는다.
+     방 정보가 생기는 순간 한 번 새로고침해서 동기화를 켠다. (방이 이미 있으면 아무것도 안 함 → 반복 없음) */
+  if(!room){ var _rt=setInterval(function(){ var r=null; try{ r=localStorage.getItem('wp-room'); }catch(e){}
+    if(r){ clearInterval(_rt); setTimeout(function(){ try{ location.reload(); }catch(e){} },400); } },700); }
 
   var HL={ d:null, st:'local', _f:null, _worker:null, _tess:null, _tp:null,
     parse:parseReceipt,
@@ -10517,7 +10521,7 @@ var HM_F13="<!doctype html><html lang=\"ko\"><head><meta charset=\"utf-8\"><meta
   }
   window.__setMode=setMode;
   window.__hardReload=function(){ location.replace(location.pathname + '?v=' + Date.now()); };
-  window.__BUILD='2026.11.13.2300';
+  window.__BUILD='2026.11.13.2330';
   try{ setMode('hm'); }catch(e){}  /* 열면 신혼여행 탭부터 */
 })();
 </script>

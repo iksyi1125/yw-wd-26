@@ -273,6 +273,7 @@
 <div id="modeSwitch">
   <button id="mm-wed" class="on" onclick="__setMode('wed')">💍 결혼준비</button>
   <button id="mm-hm" onclick="__setMode('hm')">✈️ 신혼여행</button>
+  <button class="rl" title="오프라인 저장" onclick="if(window.HO)HO.open()">📥</button>
   <button class="rl" title="최신버전으로 새로고침" onclick="__hardReload()">↻</button>
 </div>
 
@@ -10514,6 +10515,84 @@ var HM_F13="<!doctype html><html lang=\"ko\"><head><meta charset=\"utf-8\"><meta
   @media (max-width:520px){ #modeHoneymoon .hm-subtabs{ gap:5px; } #modeHoneymoon .hm-subtabs button{ padding:8px 9px; font-size:12.5px; white-space:nowrap; } }
 </style>
 
+<!-- ── 오프라인 저장 (서비스워커 sw.js + 사진 미리 받기) — hm_led_block.html 뒤에 붙는 독립 블록 ── -->
+<script id="hm-offline-js">
+(function(){
+  var SHELL='hm-shell-v1', IMG='hm-img-v1', LIB='hm-lib-v1';
+  var LS={ get:function(k,d){ try{var v=localStorage.getItem(k);return v?JSON.parse(v):d;}catch(e){return d;} }, set:function(k,v){ try{localStorage.setItem(k,JSON.stringify(v));}catch(e){} } };
+  var esc=function(s){return String(s==null?'':s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');};
+  function shellKey(){ return new URL('./offline-shell', location.href.split('?')[0].split('#')[0]).href; }
+  var HO={ sup:(('serviceWorker' in navigator)&&('caches' in window)), _run:0, _st:null,
+    reg:function(){ if(!this.sup)return; try{ navigator.serviceWorker.register('sw.js').then(function(){},function(){}); }catch(e){} },
+    /* 지금 화면(index)을 저장 — 인터넷이 될 때만. 저장본의 빌드 번호를 기억해 두고 같으면 건너뜀 */
+    saveShell:function(force){ var self=this; if(!this.sup)return Promise.resolve(false);
+      if(!force && LS.get('hm-off-build','')===(window.__BUILD||'?'))return Promise.resolve(true);
+      return fetch(location.pathname,{cache:'no-store'}).then(function(res){ if(!res.ok)throw 0; return res.text(); }).then(function(t){
+        if(t.indexOf('id="hm-js"')<0)throw 0; var m=/window\.__BUILD='([^']+)'/.exec(t), b=m?m[1]:'?';
+        return caches.open(SHELL).then(function(c){ return c.match(shellKey()).then(function(old){ var ob=(old&&old.headers.get('x-build'))||''; if(ob&&b!=='?'&&b<ob)return;
+          return c.put(shellKey(), new Response(t,{headers:{'content-type':'text/html; charset=utf-8','x-build':b}})); }); }).then(function(){ LS.set('hm-off-build',b); return true; });
+      }).then(function(ok){ self.saveLibs(); return ok; }, function(){ return false; }); },
+    /* 폰트·Firebase 스크립트·아이콘도 저장 (없어도 화면은 뜨지만 있으면 온전함) */
+    saveLibs:function(){ var urls=['manifest.webmanifest','icon-192.png','icon-180.png']; var q=document.querySelectorAll('script[src^="http"],link[rel="stylesheet"][href^="http"]');
+      for(var i=0;i<q.length;i++)urls.push(q[i].src||q[i].href);
+      return caches.open(LIB).then(function(c){ return Promise.all(urls.map(function(u){ var abs=new URL(u,location.href).href, same=(new URL(abs).origin===location.origin);
+        return c.match(abs).then(function(m){ if(m)return; return fetch(abs,same?{}:{mode:'no-cors',credentials:'omit'}).then(function(res){ if(res.ok||res.type==='opaque')return c.put(abs,res); }); }).then(function(){},function(){}); })); }).then(function(){},function(){}); },
+    lists:function(){ var B=(window.HM&&HM.data&&HM.data.book)||[], hero={}, more={}; var nu=function(u){ if(typeof u!=='string'||!/^https?:\/\//.test(u))return ''; try{ return new URL(u).href; }catch(e){ return ''; } };   /* 저장 키와 같은 모양으로 정규화 */
+      B.forEach(function(p){ var a=nu(p.img); if(a)hero[a]=1; (p.dimg||[]).forEach(function(u){ u=nu(u); if(u)more[u]=1; }); (p.menuImg||[]).forEach(function(u){ u=nu(u); if(u)more[u]=1; }); });
+      for(var k in hero)delete more[k]; return {hero:Object.keys(hero), more:Object.keys(more)}; },
+    cached:function(){ if(!this.sup)return Promise.resolve({}); return caches.open(IMG).then(function(c){ return c.keys(); }).then(function(ks){ var o={}; ks.forEach(function(r){ o[r.url]=1; }); return o; },function(){ return {}; }); },
+    status:function(){ var self=this, L=this.lists(); return Promise.all([ this.cached(), this.sup?caches.open(SHELL).then(function(c){ return c.match(shellKey()); }).then(function(m){ return !!m; },function(){ return false; }):Promise.resolve(false) ]).then(function(a){
+        var have=a[0], h=0, m=0; L.hero.forEach(function(u){ if(have[u])h++; }); L.more.forEach(function(u){ if(have[u])m++; });
+        return (self._st={shell:a[1], build:LS.get('hm-off-build',''), hero:h, heroN:L.hero.length, more:m, moreN:L.more.length}); }); },
+    /* 사진 미리 받기: all=false 대표 사진만, true 메뉴 사진까지 */
+    pack:function(all){ var self=this, run=++this._run, L=this.lists(), list=all?L.hero.concat(L.more):L.hero, done=0, fail=0, i=0, total=0;
+      var prog=function(t){ var p=document.getElementById('ho-prog'); if(p)p.textContent=t; };
+      prog('준비 중…'); this._quota=0; this.saveShell(true);
+      return this.cached().then(function(have){ list=list.filter(function(u){ return !have[u]; });
+        var easy=function(u){ return /(^https:\/\/[a-z0-9.\-]*googleusercontent\.com\/)|wikimedia\.org\//.test(u)?0:1; };   /* 저장 공간을 덜 먹는 쪽(구글·위키미디어)부터 */
+        list.sort(function(a,b){ return easy(a)-easy(b); }); total=list.length;
+        if(!total){ prog('이미 모두 저장돼 있습니다.'); return self.open(); }
+        return caches.open(IMG).then(function(c){ return new Promise(function(resolve){
+          var next=function(){ if(run!==self._run)return resolve('stop'); if(i>=list.length){ if(done+fail>=total)resolve('done'); return; }
+            if(self._quota){ fail+=(list.length-i); i=list.length; if(done+fail>=total)resolve('done'); return; }
+            var u=list[i++]; self.grab(c,u).then(function(){ done++; },function(e){ fail++; var n=String((e&&e.name)||e||''); if(/Quota/i.test(n))self._quota=1; }).then(function(){ prog('사진 받는 중 '+(done+fail)+' / '+total+(fail?' (실패 '+fail+')':'')); next(); if(done+fail>=total)resolve('done'); }); };
+          for(var k=0;k<5;k++)next(); }); }); })
+      .then(function(r){ if(run!==self._run)return; self.open(r==='done'?('사진 '+done+'장을 저장했습니다.'+(fail?' '+fail+'장은 받지 못했습니다'+(self._quota?' — 폰 저장 공간(브라우저 할당량)이 부족합니다. 대표 사진만 받거나 "사진 지우기" 후 다시 시도해 주세요.':'(사이트가 막았거나 연결 문제) — 다시 누르면 그것만 다시 받습니다.'):'')):''); },
+        function(){ if(run===self._run)self.open('저장 중 문제가 생겼습니다 — 저장 공간이나 연결을 확인하고 다시 눌러 주세요.',1); }); },
+    /* 한 장 받기: 먼저 CORS 로(구글·위키미디어 사진은 허용됨 → 실패 여부를 알 수 있고 저장 공간 계산도 정확), 안 되면 no-cors 로 */
+    grab:function(c,u){ var o={credentials:'omit',referrerPolicy:'no-referrer'};
+      return fetch(u,{mode:'cors',credentials:o.credentials,referrerPolicy:o.referrerPolicy}).then(function(res){ if(res.ok)return c.put(u,res); throw 0; })
+        .then(null,function(e){ if(e&&/Quota/i.test(String(e.name||'')))throw e;
+          return fetch(u,{mode:'no-cors',credentials:o.credentials,referrerPolicy:o.referrerPolicy}).then(function(res){ if(res.type==='opaque'||res.ok)return c.put(u,res); throw 0; }); }); },
+    stop:function(){ this._run++; this.open('받기를 멈췄습니다. 받은 사진은 남아 있습니다.'); },
+    clear:function(){ var self=this; if(!confirm('저장해 둔 사진을 모두 지울까요? (화면 저장본은 그대로 둡니다)'))return; this._run++; caches.delete(IMG).then(function(){ self.open('사진을 지웠습니다.'); },function(){ self.open(); }); },
+    open:function(msg,bad){ var self=this, box=document.getElementById('hl-box'), sheet=document.getElementById('hl-sheet'); if(!box||!sheet){ alert('오프라인 저장 창을 열 수 없습니다.'); return; }
+      var head='<div class="hd"><b>📥 오프라인 저장</b><button onclick="HO.close()">✕</button></div>'+(msg?'<div class="msg'+(bad?' err':'')+'">'+esc(msg)+'</div>':'');
+      if(window.HL)HL._f={oform:1};
+      if(!this.sup){ box.innerHTML=head+'<div class="msg err">이 브라우저는 오프라인 저장을 지원하지 않습니다. 사파리나 크롬에서 열어 주세요.</div><div class="btns"><button onclick="HO.close()">닫기</button></div>'; sheet.classList.add('on'); return; }
+      box.innerHTML=head+'<div class="busy" style="padding:18px 10px"><div class="sp"></div>확인 중…</div>'; sheet.classList.add('on'); document.body.style.overflow='hidden';
+      this.saveShell(false).then(function(){ return self.status(); }).then(function(s){
+        var on=(navigator.onLine!==false);
+        box.innerHTML=head+
+          '<div class="msg" style="font-weight:500">인터넷이 없을 때도 일정·책자·준비물·가계부를 볼 수 있게 이 폰에 저장합니다. 사진은 아래 버튼으로 미리 받아 두어야 오프라인에서 보입니다.</div>'+
+          '<div class="lb">화면 (일정 · 책자 글 · 준비물 · 가계부)</div><div style="font-size:14px;font-weight:700;margin:0 2px">'+(s.shell?'✅ 저장됨'+(s.build?' — 빌드 '+esc(s.build):''):'아직 저장 안 됨 — 인터넷이 될 때 이 창을 다시 열어 주세요')+'</div>'+
+          '<div class="lb">책자 대표 사진</div><div style="font-size:14px;font-weight:700;margin:0 2px">'+s.hero+' / '+s.heroN+'장</div>'+
+          '<div class="lb">인기 메뉴 · 메뉴판 사진</div><div style="font-size:14px;font-weight:700;margin:0 2px">'+s.more+' / '+s.moreN+'장</div>'+
+          '<div id="ho-prog" style="font-size:13px;font-weight:700;color:#b08d4f;margin:12px 2px 0;min-height:18px"></div>'+
+          '<div class="btns" style="flex-wrap:wrap"><button class="save" style="flex:1 1 100%" onclick="HO.pack(false)">대표 사진 받기 ('+(s.heroN-s.hero)+'장 남음)</button>'+
+          '<button style="flex:1 1 100%" onclick="HO.pack(true)">메뉴 사진까지 전부 받기 ('+(s.heroN-s.hero+s.moreN-s.more)+'장 남음 · 와이파이 권장)</button></div>'+
+          '<div class="btns"><button onclick="HO.close()">닫기</button><button onclick="HO.stop()">받기 멈춤</button><button class="del" onclick="HO.clear()">사진 지우기</button></div>'+
+          (on?'':'<div class="msg err" style="margin-top:12px">지금은 인터넷이 연결돼 있지 않습니다. 사진 받기는 연결된 뒤에 눌러 주세요.</div>')+
+          '<details><summary>알아둘 점</summary><pre style="font-family:inherit;font-size:12px">· 받는 동안 이 창을 열어 두세요. 멈춰도 받은 만큼은 남고, 다시 누르면 이어서 받습니다.\n· 오프라인에서는 저장해 둔 화면이 열립니다. 폰에서 입력한 내용(가계부·체크)은 폰에 남아 있다가 인터넷이 되면 동기화됩니다.\n· 일정표의 지도 보기, 구글 지도 링크, 영수증 읽기는 인터넷이 있어야 합니다.\n· 사진 용량은 대표 사진 수십 MB, 전부 받으면 100MB를 넘을 수 있습니다(추정).</pre></details>';
+      }); },
+    close:function(){ if(window.HL&&HL.close)HL.close(); else { var s=document.getElementById('hl-sheet'); if(s)s.classList.remove('on'); document.body.style.overflow=''; } },
+    init:function(){ var self=this; this.reg(); if(!this.sup)return; setTimeout(function(){ if(navigator.onLine!==false)self.saveShell(false); },4000); }
+  };
+  window.HO=HO;
+  if(document.readyState!=='loading')HO.init(); else document.addEventListener('DOMContentLoaded',function(){ HO.init(); });
+})();
+</script>
+
 
 <script id="mode-switch-js">
 (function(){
@@ -10525,7 +10604,7 @@ var HM_F13="<!doctype html><html lang=\"ko\"><head><meta charset=\"utf-8\"><meta
   }
   window.__setMode=setMode;
   window.__hardReload=function(){ location.replace(location.pathname + '?v=' + Date.now()); };
-  window.__BUILD='2026.11.14.0900';
+  window.__BUILD='2026.11.15.1900';
   /* PIN 화면(#gate)은 결혼준비 영역 안에 있어서, 신혼여행부터 열면 숨은 영역과 함께 가려져 PIN 없이 신혼여행이 보였다.
      body 바로 아래로 옮겨 어느 탭에서든 화면 전체를 덮게 한다. */
   try{ var g=document.getElementById('gate'); if(g&&g.parentNode!==document.body)document.body.appendChild(g); }catch(e){}

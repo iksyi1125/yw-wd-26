@@ -10579,11 +10579,11 @@ var HM_F13="<!doctype html><html lang=\"ko\"><head><meta charset=\"utf-8\"><meta
           '<div class="lb">책자 대표 사진</div><div style="font-size:14px;font-weight:700;margin:0 2px">'+s.hero+' / '+s.heroN+'장</div>'+
           '<div class="lb">인기 메뉴 · 메뉴판 사진</div><div style="font-size:14px;font-weight:700;margin:0 2px">'+s.more+' / '+s.moreN+'장</div>'+
           '<div id="ho-prog" style="font-size:13px;font-weight:700;color:#b08d4f;margin:12px 2px 0;min-height:18px"></div>'+
-          '<div class="btns" style="flex-wrap:wrap"><button class="save" style="flex:1 1 100%" onclick="HO.pack(false)">대표 사진 받기 ('+(s.heroN-s.hero)+'장 남음)</button>'+
-          '<button style="flex:1 1 100%" onclick="HO.pack(true)">메뉴 사진까지 전부 받기 ('+(s.heroN-s.hero+s.moreN-s.more)+'장 남음 · 와이파이 권장)</button></div>'+
+          '<div class="btns" style="flex-wrap:wrap"><button class="save" style="flex:1 1 100%" onclick="HO.pack(false)">대표 사진 받기 ('+(s.heroN-s.hero)+'장 남음 · 전체 약 150MB)</button>'+
+          '<button style="flex:1 1 100%" onclick="HO.pack(true)">메뉴 사진까지 전부 받기 ('+(s.heroN-s.hero+s.moreN-s.more)+'장 남음 · 전체 약 300MB · 와이파이 권장)</button></div>'+
           '<div class="btns"><button onclick="HO.close()">닫기</button><button onclick="HO.stop()">받기 멈춤</button><button class="del" onclick="HO.clear()">사진 지우기</button></div>'+
           (on?'':'<div class="msg err" style="margin-top:12px">지금은 인터넷이 연결돼 있지 않습니다. 사진 받기는 연결된 뒤에 눌러 주세요.</div>')+
-          '<details><summary>알아둘 점</summary><pre style="font-family:inherit;font-size:12px">· 받는 동안 이 창을 열어 두세요. 멈춰도 받은 만큼은 남고, 다시 누르면 이어서 받습니다.\n· 오프라인에서는 저장해 둔 화면이 열립니다. 폰에서 입력한 내용(가계부·체크)은 폰에 남아 있다가 인터넷이 되면 동기화됩니다.\n· 일정표의 지도 보기, 구글 지도 링크, 영수증 읽기는 인터넷이 있어야 합니다.\n· 사진 용량은 대표 사진 수십 MB, 전부 받으면 100MB를 넘을 수 있습니다(추정).</pre></details>';
+          '<details><summary>알아둘 점</summary><pre style="font-family:inherit;font-size:12px">· 받는 동안 이 창을 열어 두세요. 멈춰도 받은 만큼은 남고, 다시 누르면 이어서 받습니다.\n· 오프라인에서는 저장해 둔 화면이 열립니다. 폰에서 입력한 내용(가계부·체크)은 폰에 남아 있다가 인터넷이 되면 동기화됩니다.\n· 일정표의 지도 보기, 구글 지도 링크, 영수증 읽기는 인터넷이 있어야 합니다.\n· 사진 용량(추정): 대표 사진 약 150MB, 메뉴 사진까지 전부 약 300MB. 대표 사진은 1~2분쯤 걸립니다.\n· 크롬(안드로이드)은 저장 공간 사용량이 실제보다 훨씬 크게 표시될 수 있습니다(브라우저 계산 방식).</pre></details>';
       }); },
     close:function(){ if(window.HL&&HL.close)HL.close(); else { var s=document.getElementById('hl-sheet'); if(s)s.classList.remove('on'); document.body.style.overflow=''; } },
     init:function(){ var self=this; this.reg(); if(!this.sup)return; setTimeout(function(){ if(navigator.onLine!==false)self.saveShell(false); },4000); }
@@ -10604,7 +10604,7 @@ var HM_F13="<!doctype html><html lang=\"ko\"><head><meta charset=\"utf-8\"><meta
   }
   window.__setMode=setMode;
   window.__hardReload=function(){ location.replace(location.pathname + '?v=' + Date.now()); };
-  window.__BUILD='2026.11.15.1900';
+  window.__BUILD='2026.11.15.1930';
   /* PIN 화면(#gate)은 결혼준비 영역 안에 있어서, 신혼여행부터 열면 숨은 영역과 함께 가려져 PIN 없이 신혼여행이 보였다.
      body 바로 아래로 옮겨 어느 탭에서든 화면 전체를 덮게 한다. */
   try{ var g=document.getElementById('gate'); if(g&&g.parentNode!==document.body)document.body.appendChild(g); }catch(e){}

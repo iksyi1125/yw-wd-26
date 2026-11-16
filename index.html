@@ -9624,8 +9624,8 @@ var HM_F13="<!doctype html><html lang=\"ko\"><head><meta charset=\"utf-8\"><meta
   var FX_FALLBACK={EUR:1593, USD:1360, date:'2026-09-20(기본값)'};
 
   /* ── 준비물 시드 (PREP_VER 올리면 빠진 항목만 추가, 체크·수정은 유지) ── */
-  var PREP_VER=12;
-  var PREP_DROP=['Don Juan II 취소 조건 확인','Chez Paul (11/24 19:30) · Vins des Pyrénées (11/23 19:00) 예약','상비약 — 감기·소화제·진통제·밴드·멀미약(베르동 산길)','오랑주리·오르세 (11/25) 온라인 시간지정 예매','Chez Paul (11/24 저녁) · Vins des Pyrénées (11/23) 예약','캐리어 2개 — Transavia 위탁 30kg/인 · TGV 90×70×50cm','아시아나 체크인 때 혜원 수하물 확인','귀국편(OZ502)은 짐 늘어도 됨','Ubigi 앱 → 프랑스 25GB/30일 (€19) 2인 구매·설치','Viber Out 또는 Yolla 설치 → $5 충전 → 테스트 통화','여행자보험 가입 → 증권번호 저장','픽업 시 스노우체인 또는 스노우삭스 요청','자차 면책금 확인 → 카드사 렌터카 보험 또는 현장 풀커버','안시역 일요일 08:00 반납 가능 여부 바우처 확인','★ 오랑주리 11/25 14:00 예매 (€12.50)','★ 오페라 가르니에 11/24 10:30 예매 (현장판매 없음 · 비EU €25)','★ 오르세 11/26 09:30 예매'];
+  var PREP_VER=13;
+  var PREP_DROP=['★ 오페라 가르니에 11/24 11:30 예매 (현장판매 없음 · 비EU €25)','Don Juan II 취소 조건 확인','Chez Paul (11/24 19:30) · Vins des Pyrénées (11/23 19:00) 예약','상비약 — 감기·소화제·진통제·밴드·멀미약(베르동 산길)','오랑주리·오르세 (11/25) 온라인 시간지정 예매','Chez Paul (11/24 저녁) · Vins des Pyrénées (11/23) 예약','캐리어 2개 — Transavia 위탁 30kg/인 · TGV 90×70×50cm','아시아나 체크인 때 혜원 수하물 확인','귀국편(OZ502)은 짐 늘어도 됨','Ubigi 앱 → 프랑스 25GB/30일 (€19) 2인 구매·설치','Viber Out 또는 Yolla 설치 → $5 충전 → 테스트 통화','여행자보험 가입 → 증권번호 저장','픽업 시 스노우체인 또는 스노우삭스 요청','자차 면책금 확인 → 카드사 렌터카 보험 또는 현장 풀커버','안시역 일요일 08:00 반납 가능 여부 바우처 확인','★ 오랑주리 11/25 14:00 예매 (€12.50)','★ 오페라 가르니에 11/24 10:30 예매 (현장판매 없음 · 비EU €25)','★ 오르세 11/26 09:30 예매'];
   var PREP_DUE=[
     {iso:'2026-11-14',d:'11/14',t:'숙소 무료취소 1차 마감 — 오를리·아비뇽 (23:59 CET)'},
     {iso:'2026-11-15',d:'11/15',t:'니스 Mercure 무료취소 마감 (23:59 CET, 이후 첫 1박)'},
@@ -9713,7 +9713,7 @@ var HM_F13="<!doctype html><html lang=\"ko\"><head><meta charset=\"utf-8\"><meta
     {t:'📞 예약 · 확인',items:[
       {t:'Chez Madie (마르세유 11/19 19:30) 예약 + 부야베스 사전주문'},
       {t:'La Fontaine de Mars (파리 11/25 저녁) 예약',m:'+33 1 47 05 46 44'},
-      {t:'★ 오페라 가르니에 11/24 11:30 예매 (현장판매 없음 · 비EU €25)',m:'operadeparis.fr → Visites → Palais Garnier'},
+      {t:'✅ 오페라 가르니에 11/24 11:30 예매 완료 (€25×2 + 취소보험 €3.41)',m:'주문 21936401 · 자유관람 2장 — QR은 확인 메일과 operadeparis.fr 계정 · 입구는 Scribe·Auber 거리 모퉁이 · 예약 시각부터 30분 안에 입장 · 캐리어·큰 가방 반입 불가(낮에는 물품보관소 닫음) · 리허설로 객석이 닫힐 수 있음',d:true},
       {t:'✅ 오랑주리 11/25 14:00 예매 완료 (€12.50×2)',m:'주문 ID 202921209 · 티켓 신영 73305393178505 / 혜원 73306039730362 · PDF: 티켓 Invoice 폴더 · 시간지정 입장',d:true},
       {t:'★ 오르세 11/26 14:30 예매',m:'musee-orsay.fr'},
       {t:'Vins des Pyrénées (11/23 19:00) 예약'},
@@ -10613,7 +10613,7 @@ var HM_F13="<!doctype html><html lang=\"ko\"><head><meta charset=\"utf-8\"><meta
   }
   window.__setMode=setMode;
   window.__hardReload=function(){ location.replace(location.pathname + '?v=' + Date.now()); };
-  window.__BUILD='2026.11.16.0100';
+  window.__BUILD='2026.11.16.0930';
   /* PIN 화면(#gate)은 결혼준비 영역 안에 있어서, 신혼여행부터 열면 숨은 영역과 함께 가려져 PIN 없이 신혼여행이 보였다.
      body 바로 아래로 옮겨 어느 탭에서든 화면 전체를 덮게 한다. */
   try{ var g=document.getElementById('gate'); if(g&&g.parentNode!==document.body)document.body.appendChild(g); }catch(e){}

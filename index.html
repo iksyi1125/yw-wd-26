@@ -10190,10 +10190,21 @@ var HM_F13="<!doctype html><html lang=\"ko\"><head><meta charset=\"utf-8\"><meta
   #hl-sheet .wrow label{ flex:0 0 96px; font-size:13.5px; font-weight:700; }
   #hl-sheet .wrow .in{ text-align:right; font-weight:700; }
   @keyframes hlspin{ to{ transform:rotate(360deg); } }
+  #hl-sheet .ph{ display:flex; gap:12px; align-items:flex-start; }
+  #hl-sheet .ph img{ width:92px; height:124px; object-fit:cover; border-radius:10px; border:1px solid #e8e1d6; background:#f3ede0; cursor:pointer; flex:0 0 auto; }
+  #hl-sheet .ph .pa{ flex:1; min-width:0; display:flex; flex-wrap:wrap; gap:6px; align-content:flex-start; }
+  #hl-sheet .ph .pa small{ flex:1 0 100%; font-size:12px; color:#8a8177; line-height:1.5; margin-bottom:2px; }
+  #hl-sheet .ph .pa button, #hl-sheet .att{ border:1px solid #e8e1d6; background:#fff; border-radius:999px; padding:8px 13px; font-size:13px; font-weight:600; color:#6f675e; cursor:pointer; font-family:inherit; white-space:nowrap; }
+  #hl-pv{ position:fixed; inset:0; background:rgba(0,0,0,.93); z-index:140; display:none; overflow:auto; -webkit-overflow-scrolling:touch; padding:44px 10px 30px; }
+  #hl-pv.on{ display:block; }
+  #hl-pv img{ display:block; width:100%; max-width:720px; margin:0 auto; border-radius:6px; }
+  #hl-pv span{ position:fixed; top:8px; right:12px; color:#fff; font-size:13px; font-weight:700; background:rgba(255,255,255,.18); border-radius:999px; padding:7px 13px; font-family:'Pretendard Variable',Pretendard,-apple-system,sans-serif; }
 </style>
 
 <div id="hl-sheet" onclick="if(event.target===this)HL.close()"><div class="box" id="hl-box"></div></div>
 <input type="file" id="hl-file" accept="image/*" tabindex="-1" aria-hidden="true" style="position:fixed;left:-9999px;top:0;width:1px;height:1px;opacity:0" onchange="HL.onFile(this)">
+<input type="file" id="hl-file2" accept="image/*" tabindex="-1" aria-hidden="true" style="position:fixed;left:-9999px;top:0;width:1px;height:1px;opacity:0" onchange="HL.onFile2(this)">
+<div id="hl-pv" onclick="this.classList.remove('on')"><span>닫기 ✕</span><img alt="영수증 사진"></div>
 
 <script id="hm-led-js">
 (function(){
@@ -10284,6 +10295,40 @@ var HM_F13="<!doctype html><html lang=\"ko\"><head><meta charset=\"utf-8\"><meta
   if(!room){ var _rt=setInterval(function(){ var r=null; try{ r=localStorage.getItem('wp-room'); }catch(e){}
     if(r){ clearInterval(_rt); setTimeout(function(){ try{ location.reload(); }catch(e){} },400); } },700); }
 
+  /* ── 영수증 사진 보관: 줄인 JPEG 를 폰 안(IndexedDB)에 두고, 동기화 방의 ledp/<내역 id> 에도 올려 다른 폰에서 열 때 받아 온다.
+        (가계부 내역과 다른 경로라 평소 동기화에는 사진이 실리지 않음) 못 올린 사진은 PQ 목록에 남겨 다음에 다시 올림 ── */
+  var PQ='hm2026-ledpq', pref=null; if(ref){ try{ pref=firebase.database().ref('honeymoon/'+room+'/ledp'); }catch(e){ pref=null; } }
+  var PH={ db:null, mem:{}, _o:null, _fl:false, err:'',
+    open:function(){ var s=this; if(this._o)return this._o;
+      this._o=new Promise(function(res){ try{ var rq=indexedDB.open('hm2026-rcpt',1);
+          rq.onupgradeneeded=function(){ try{ rq.result.createObjectStore('p',{keyPath:'id'}); }catch(x){} };
+          rq.onsuccess=function(){ s.db=rq.result; res(s.db); }; rq.onerror=function(){ res(null); }; rq.onblocked=function(){ res(null); };
+        }catch(x){ res(null); } });
+      return this._o; },
+    tx:function(mode,fn){ return this.open().then(function(db){ if(!db)return null;
+        return new Promise(function(res){ try{ var t=db.transaction('p',mode), rq=fn(t.objectStore('p'));
+            t.oncomplete=function(){ res(rq&&rq.result!==undefined?rq.result:true); }; t.onerror=function(){ res(null); }; t.onabort=function(){ res(null); }; }catch(x){ res(null); } }); }); },
+    getL:function(id){ var s=this; if(this.mem[id])return Promise.resolve(this.mem[id]); return this.tx('readonly',function(st){ return st.get(id); }).then(function(r){ return (r&&r.d)?r:null; }); },
+    putL:function(rec){ var s=this; return this.tx('readwrite',function(st){ return st.put(rec); }).then(function(ok){ if(ok==null)s.mem[rec.id]=rec; else delete s.mem[rec.id]; return ok!=null; }); },
+    q:function(){ var a=LS.get(PQ,[]); return Array.isArray(a)?a:[]; },
+    qAdd:function(id){ var a=this.q(); if(a.indexOf(id)<0){ a.push(id); LS.set(PQ,a); } },
+    qDel:function(id){ var a=this.q(), i=a.indexOf(id); if(i>=0){ a.splice(i,1); LS.set(PQ,a); } },
+    up:function(id){ var s=this; if(!pref)return Promise.resolve(false);
+      return this.getL(id).then(function(rec){ if(!rec){ s.qDel(id); return false; }
+        try{ return pref.child(id).set(JSON.stringify({u:rec.u,d:rec.d})).then(function(){ s.qDel(id); s.err=''; return true; },
+          function(e){ s.err=/denied/i.test(String((e&&(e.code||e.message))||''))?'perm':'net'; return false; }); }catch(x){ return false; } }); },
+    flush:function(){ var s=this, a=this.q(); if(this._fl||!pref||!a.length)return; this._fl=true;
+      var i=0, next=function(){ if(i>=a.length){ s._fl=false; return; } s.up(a[i++]).then(next,next); }; next(); },
+    save:function(id,data,u){ var s=this; return this.putL({id:id,u:u,d:data}).then(function(){ s.qAdd(id); return s.up(id); }); },
+    get:function(id,u){ var s=this; return this.getL(id).then(function(rec){ var loc=rec?rec.d:'';
+        if(rec&&(rec.u||0)>=(u||0))return loc; if(!pref)return loc;
+        return new Promise(function(res){ var to=setTimeout(function(){ res(loc); },15000);
+          try{ pref.child(id).once('value').then(function(sn){ clearTimeout(to); var v=sn.val(), r=null; try{ r=typeof v==='string'?JSON.parse(v):v; }catch(x){}
+              if(r&&r.d){ s.putL({id:id,u:r.u||u||1,d:r.d}); res(r.d); } else res(loc); }, function(){ clearTimeout(to); res(loc); }); }catch(x){ clearTimeout(to); res(loc); } }); }); },
+    del:function(id){ delete this.mem[id]; this.qDel(id); this.tx('readwrite',function(st){ return st['delete'](id); });
+      if(pref){ try{ pref.child(id).remove().then(function(){},function(){}); }catch(x){} } },
+    state:function(id){ return !pref?'이 폰에 저장됨 (동기화 꺼짐)':this.q().indexOf(id)<0?'두 폰에서 볼 수 있음':this.err==='perm'?'이 폰에만 저장됨 (사진 동기화 권한 없음)':'이 폰에 저장됨 · 다른 폰으로 보내는 중'; } };
+
   var HL={ d:null, st:'local', _f:null, _worker:null, _tess:null, _tp:null,
     parse:parseReceipt,
     load:function(){ var d=LS.get(KEY,null); if(!d||typeof d!=='object')d={};
@@ -10327,20 +10372,20 @@ var HM_F13="<!doctype html><html lang=\"ko\"><head><meta charset=\"utf-8\"><meta
         var w=self.wal(e.w), to=self.wal(e.to), wn=w?w.n:'?', ic, t1, t2, am;
         if(e.k==='m'){ ic='⇄'; t1=e.t||(e.w==='hana'&&e.to==='cash'?'ATM 인출':'이동'); t2=wn+' → '+(to?to.n:'?'); am='<div class="am mv">'+fmt(cents(e.a))+'</div>'; }
         else if(e.k==='i'){ ic='➕'; t1=e.t||'입금'; t2=wn+'에 들어옴'; am='<div class="am in">+'+fmt(cents(e.a))+'</div>'; }
-        else { ic=catIcon(e.c); t1=e.t||e.c||'지출'; t2=(e.c||'기타')+' · '+wn+(e.src==='r'?' · 📷':''); am='<div class="am">'+fmt(-cents(e.a))+'</div>'; }
+        else { ic=catIcon(e.c); t1=e.t||e.c||'지출'; t2=(e.c||'기타')+' · '+wn+(e.p?' · 📎':e.src==='r'?' · 📷':''); am='<div class="am">'+fmt(-cents(e.a))+'</div>'; }
         h+='<div class="hl-it" onclick="HL.open(\''+esc(e.id)+'\')"><div class="ic">'+ic+'</div><div class="tx"><div class="t1">'+esc(t1)+'</div><div class="t2">'+esc(t2)+'</div></div>'+am+'</div>'; });
       h+='<div class="hl-foot"><button onclick="HL.openW()">⚙ 시작 금액 수정</button> <button onclick="HL.openAI()">🤖 Claude 영수증 읽기'+(this.aiKey()?' ✅':' 설정')+'</button></div>';
       el.innerHTML=h; },
 
     /* ── 입력 창 ── */
     show:function(){ document.getElementById('hl-sheet').classList.add('on'); document.body.style.overflow='hidden'; },
-    close:function(){ document.getElementById('hl-sheet').classList.remove('on'); document.body.style.overflow=''; this._f=null; this._scan=(this._scan||0)+1; },
-    blank:function(){ var lw=LS.get('hm2026-ledw','cash'); if(!this.wal(lw))lw='cash'; return {id:null,k:'x',a:'',w:lw,to:'cash',c:'식비',t:'',d:today(),cands:null,raw:'',msg:'',src:''}; },
+    close:function(){ document.getElementById('hl-sheet').classList.remove('on'); document.body.style.overflow=''; this._f=null; this._php=null; this._scan=(this._scan||0)+1; var pv=document.getElementById('hl-pv'); if(pv)pv.classList.remove('on'); },
+    blank:function(){ var lw=LS.get('hm2026-ledw','cash'); if(!this.wal(lw))lw='cash'; return {id:null,k:'x',a:'',w:lw,to:'cash',c:'식비',t:'',d:today(),cands:null,raw:'',msg:'',src:'',p:0,photo:'',rm:0}; },
     open:function(id,preset){ var f=this.blank(), e=id&&this.d.e[id];
-      if(e){ f.id=e.id; f.k=e.k||'x'; f.a=(+e.a||0).toFixed(2); f.w=wid(e.w); f.to=wid(e.to||'cash'); f.c=e.c||'식비'; f.t=e.t||''; f.d=e.d||today(); f.src=e.src||''; }
+      if(e){ f.id=e.id; f.k=e.k||'x'; f.a=(+e.a||0).toFixed(2); f.w=wid(e.w); f.to=wid(e.to||'cash'); f.c=e.c||'식비'; f.t=e.t||''; f.d=e.d||today(); f.src=e.src||''; f.p=e.p||0; }
       if(preset)for(var k in preset)f[k]=preset[k];
       if(f.k==='m'&&!e&&!(preset&&preset.w)){ f.w='hana'; f.to='cash'; }
-      this._f=f; this.form(); this.show();
+      this._php=null; this._f=f; this.form(); this.show();
       if(!e&&!f.a){ var a=document.getElementById('hl-a'); if(a)try{ a.focus(); }catch(x){} } },
     sync:function(){ var f=this._f; if(!f)return; var g=function(i){ var x=document.getElementById(i); return x?x.value:null; };
       var a=g('hl-a'), t=g('hl-t'), d=g('hl-d'); if(a!=null)f.a=a; if(t!=null)f.t=t; if(d)f.d=d; },
@@ -10361,18 +10406,33 @@ var HM_F13="<!doctype html><html lang=\"ko\"><head><meta charset=\"utf-8\"><meta
       else { h+='<div class="lb">어디로 들어왔나요 (환불·원화로 새로 충전 등)</div>'+chips('w',f.w,true); }
       h+='<div class="lb">'+(f.k==='x'?'가게 · 메모':'메모')+'</div><input class="in" id="hl-t" type="text" autocomplete="off" placeholder="'+(f.k==='x'?'예: 점심 Le Ju\'':'선택')+'" value="'+esc(f.t)+'">';
       h+='<div class="lb">날짜</div><input class="in" id="hl-d" type="date" value="'+esc(f.d)+'">';
+      if(f.k==='x'||f.photo||(f.p&&!f.rm)){ h+='<div class="lb">영수증 사진</div>';
+        if(f.photo)h+='<div class="ph"><img src="'+f.photo+'" alt="" onclick="HL.viewPh(this)"><div class="pa"><small>저장을 누르면 이 내역에 붙습니다. 사진을 누르면 크게 보입니다.</small><button onclick="HL.pickPh()">다시 찍기</button><button onclick="HL.rmPh()">사진 빼기</button></div></div>';
+        else if(f.p&&!f.rm)h+='<div class="ph"><img id="hl-phi" alt="" onclick="HL.viewPh(this)"'+(f._pd?' src="'+f._pd+'"':'')+'><div class="pa"><small id="hl-phs">'+(f._pd?esc(PH.state(f.id)):'사진 불러오는 중…')+'</small><button onclick="HL.pickPh()">바꾸기</button><button onclick="HL.rmPh()">사진 빼기</button></div></div>';
+        else h+='<button class="att" onclick="HL.pickPh()">📎 영수증 사진 붙이기</button>'; }
       h+='<div class="btns">'+(f.id?'<button class="del" onclick="HL.del()">삭제</button>':'')+'<button onclick="HL.close()">취소</button><button class="save" onclick="HL.save()">저장</button></div>';
       if(f.raw)h+='<details><summary>'+esc(f.rawT||'영수증에서 읽은 글자 보기')+'</summary><pre>'+esc(f.raw)+'</pre></details>';
-      document.getElementById('hl-box').innerHTML=h; },
+      document.getElementById('hl-box').innerHTML=h;
+      if(f.p&&!f.rm&&!f.photo&&!f._pd&&!f._pl){ var self=this; f._pl=1; PH.get(f.id,f.p).then(function(d){ f._pl=0; if(self._f!==f)return; var im=document.getElementById('hl-phi'), st=document.getElementById('hl-phs');
+          if(d){ f._pd=d; if(im)im.src=d; if(st)st.textContent=PH.state(f.id); } else { f._pf=1; if(st)st.textContent='사진을 불러오지 못했습니다 — 인터넷 연결을 확인하고 다시 열어 보세요.'; } }); }
+      else if(f._pf){ var st2=document.getElementById('hl-phs'); if(st2)st2.textContent='사진을 불러오지 못했습니다 — 인터넷 연결을 확인하고 다시 열어 보세요.'; } },
+    /* ── 영수증 사진 붙이기·보기 ── */
+    mkPhoto:function(file){ return this.toCanvas(file,1400,false).then(function(cv){ return cv.toDataURL('image/jpeg',0.6); }); },
+    pickPh:function(){ this.sync(); var i=document.getElementById('hl-file2'); if(!i)return; i.value=''; i.click(); },
+    onFile2:function(inp){ var file=inp.files&&inp.files[0], f=this._f, self=this; if(!file||!f||f.wform||f.aiform)return;
+      this.mkPhoto(file).then(function(d){ if(self._f!==f||!d)return; self.sync(); f.photo=d; f.rm=0; self.form(); }, function(){ if(self._f!==f)return; self.sync(); f.msg='사진을 읽지 못했습니다 — 다른 사진으로 해 보세요.'; f.err=1; self.form(); }); },
+    rmPh:function(){ var f=this._f; if(!f)return; this.sync(); f.photo=''; f.rm=1; this.form(); },
+    viewPh:function(im){ var s=im&&im.getAttribute('src'); if(!s)return; var pv=document.getElementById('hl-pv'); if(!pv)return; pv.querySelector('img').src=s; pv.scrollTop=0; pv.classList.add('on'); },
     save:function(){ this.sync(); var f=this._f, a=parseAmt(f.a);
       if(!(a>0)){ var b=document.getElementById('hl-amt'); if(b)b.classList.add('bad'); var i=document.getElementById('hl-a'); if(i)try{ i.focus(); }catch(x){} return; }
       if(f.k==='m'&&f.w===f.to){ f.msg='보내는 곳과 받는 곳이 같습니다.'; f.err=1; this.form(); return; }
       if(f.k!=='x'){ var w=this.wal(f.w); if(w&&w.init==null){ f.msg='"다른 카드"는 잔액을 따로 세지 않아 이동·입금에 쓸 수 없습니다.'; f.err=1; this.form(); return; } }
       var e={id:f.id||newId(), u:Date.now(), k:f.k, a:a, w:f.w, d:f.d||today(), t:String(f.t||'').trim().slice(0,80)};
       if(f.k==='x'){ e.c=f.c; LS.set('hm2026-ledw',f.w); } if(f.k==='m')e.to=f.to; if(f.src)e.src=f.src;
+      if(f.photo){ e.p=e.u; PH.save(e.id,f.photo,e.u); } else if(f.p&&!f.rm)e.p=f.p; else if(f.p)PH.del(e.id);
       this.put(e); this.close(); this.render(); },
     del:function(){ var f=this._f; if(!f||!f.id)return; if(!confirm('이 내역을 삭제할까요?'))return;
-      this.put({id:f.id,u:Date.now(),del:1}); this.close(); this.render(); },
+      if(f.p)PH.del(f.id); this.put({id:f.id,u:Date.now(),del:1}); this.close(); this.render(); },
     put:function(e){ this.d.e[e.id]=e; this.persist(); var self=this;
       if(ref){ try{ ref.child('e/'+e.id).set(JSON.stringify(e)).catch(function(){ self.fail(); }); }catch(x){} } },
     fail:function(){ this.st='err'; if(window.HM&&HM.cur==='led')this.render(); },
@@ -10408,15 +10468,16 @@ var HM_F13="<!doctype html><html lang=\"ko\"><head><meta charset=\"utf-8\"><meta
       if(n&&ref){ try{ ref.update(push).catch(function(){ self.fail(); }); }catch(x){} }
       return changed; },
     connect:function(){ var self=this; if(!ref){ this.st='local'; return; } this.st='wait';
-      ref.on('value',function(snap){ var ch=self.merge(snap.val()); var was=self.st; self.st='ok';
+      ref.on('value',function(snap){ var ch=self.merge(snap.val()); var was=self.st; self.st='ok'; PH.flush();
         if((ch||was!=='ok')&&window.HM&&HM.cur==='led')self.render(); }, function(){ self.fail(); }); },
 
-    /* ── 영수증 사진 읽기 (폰 안에서 처리 · 사진은 저장하지 않음) ── */
+    /* ── 영수증 사진 읽기 (읽은 사진은 줄여서 그 내역에 붙여 둠 → PH) ── */
     pick:function(){ var i=document.getElementById('hl-file'); if(!i)return; i.value=''; i.click(); },
     onFile:function(inp){ var f=inp.files&&inp.files[0]; if(f)this.scan(f); },
     busy:function(t,s){ document.getElementById('hl-box').innerHTML='<div class="busy"><div class="sp"></div>'+esc(t)+'<small id="hl-prog">'+esc(s||'')+'</small></div>'+
       '<div class="btns"><button onclick="HL.cancelScan()">취소하고 직접 입력</button></div>'; },
-    cancelScan:function(){ this._scan=(this._scan||0)+1; var f=this.blank(); this._f=f; this.form(); },
+    cancelScan:function(){ this._scan=(this._scan||0)+1; var f=this.blank(), self=this, php=this._php; this._f=f; this.form();
+      if(php)php.then(function(d){ if(self._f!==f||!d||f.photo||f.rm)return; self.sync(); f.photo=d; self.form(); }); },
     toCanvas:function(file,mx,gray){ mx=mx||2000; return new Promise(function(res,rej){ var url=URL.createObjectURL(file), im=new Image();
       im.onload=function(){ try{ var s=Math.min(1,mx/Math.max(im.naturalWidth,im.naturalHeight)); var cv=document.createElement('canvas');
           cv.width=Math.max(1,Math.round(im.naturalWidth*s)); cv.height=Math.max(1,Math.round(im.naturalHeight*s));
@@ -10467,7 +10528,8 @@ var HM_F13="<!doctype html><html lang=\"ko\"><head><meta charset=\"utf-8\"><meta
       for(var k=0;k<B.length;k++){ var nm=norm(String(B[k].t||'').split('(')[0]); if(nm.length>=6&&nm.length>bl&&nt.indexOf(nm)>=0){ best=B[k]; bl=nm.length; } }
       return best?out(best):null; },
     scan:function(file){ var self=this, tok=(this._scan=(this._scan||0)+1), key=this.aiKey(); this._f=this.blank(); this.busy(key?'Claude가 영수증을 읽는 중…':'영수증을 읽는 중…',key?'보통 3~6초':'준비 중…'); this.show();
-      var done=false, put=function(f){ if(done||tok!==self._scan)return; done=true; self._f=f; self.form(); };
+      var php=this._php=this.mkPhoto(file).then(function(d){ return d; },function(){ return ''; });
+      var done=false, put=function(f){ if(done||tok!==self._scan)return; done=true; php.then(function(d){ if(tok!==self._scan)return; if(d)f.photo=d; self._f=f; self.form(); }); };
       var fail=function(why){ var f=self.blank(); f.msg='영수증을 읽지 못했습니다'+(why?' ('+why+')':' (인터넷 연결 확인)')+' — 직접 입력해 주세요.'; f.err=1; put(f); };
       var viaOcr=function(note){ if(done||tok!==self._scan)return; var t=document.querySelector('#hl-box .busy'); if(t&&note)self.busy('기본 방식으로 다시 읽는 중…','준비 중…');
         self.toCanvas(file,2000,true).then(function(cv){ return self.ocr(cv); }).then(function(text){ var f=self.blank(); f.src='r';
@@ -10492,7 +10554,7 @@ var HM_F13="<!doctype html><html lang=\"ko\"><head><meta charset=\"utf-8\"><meta
     openAI:function(msg,bad){ var k=this.aiKey(), sh=!!LS.get(AKS,false);
       var h='<div class="hd"><b>🤖 Claude로 영수증 읽기</b><button onclick="HL.close()">✕</button></div>'+
         (msg?'<div class="msg'+(bad?' err':'')+'">'+esc(msg)+'</div>':'')+
-        '<div class="msg" style="font-weight:500">API 키를 넣으면 영수증 사진을 Claude가 읽어 가게·금액·날짜·분류를 채웁니다. 키는 GitHub에 올라가지 않고 폰에 저장됩니다. "두 폰이 같이 쓰기"를 켜면 우리 동기화 방(일정·준비물과 같은 곳)을 통해 다른 폰에도 자동으로 들어갑니다. 영수증 사진은 읽을 때만 Claude(Anthropic)로 전송됩니다.</div>'+
+        '<div class="msg" style="font-weight:500">API 키를 넣으면 영수증 사진을 Claude가 읽어 가게·금액·날짜·분류를 채웁니다. 키는 GitHub에 올라가지 않고 폰에 저장됩니다. "두 폰이 같이 쓰기"를 켜면 우리 동기화 방(일정·준비물과 같은 곳)을 통해 다른 폰에도 자동으로 들어갑니다. 영수증 사진은 읽을 때만 Claude(Anthropic)로 전송됩니다. (사진 보관은 키와 상관없이 폰과 동기화 방에 됩니다.)</div>'+
         '<div class="lb">상태</div><div style="font-size:14px;font-weight:700;margin:0 2px 4px">'+(k?'✅ 키 저장됨 (…'+esc(k.slice(-4))+') · '+(sh?(this.st==='ok'?'두 폰 공유 중':'공유 켜짐 — 동기화 연결 대기'):'이 폰에만'):'키 없음 — 기본 방식(폰 안에서 글자 인식)으로 읽는 중')+'</div>'+
         '<div class="lb">'+(k?'키 바꾸기':'API 키 붙여넣기')+'</div><input class="in" id="hl-key" type="password" autocomplete="off" autocapitalize="off" autocorrect="off" spellcheck="false" placeholder="sk-ant-…">'+
         '<label style="display:flex;align-items:center;gap:9px;margin:12px 2px 0;font-size:14px;font-weight:700"><input type="checkbox" id="hl-share" style="width:20px;height:20px"'+((k?sh:true)?' checked':'')+'> 두 폰이 같이 쓰기 (한 번만 넣으면 됨)</label>'+
@@ -10516,7 +10578,7 @@ var HM_F13="<!doctype html><html lang=\"ko\"><head><meta charset=\"utf-8\"><meta
 
     init:function(){ this.load(); this.connect(); if(window.HM){ HM.cur='led'; } this.render(); }
   };
-  window.HL=HL;
+  window.HL=HL; HL.PH=PH;
   if(document.readyState!=='loading')HL.init(); else document.addEventListener('DOMContentLoaded',function(){ HL.init(); });
 })();
 </script>
@@ -10613,7 +10675,7 @@ var HM_F13="<!doctype html><html lang=\"ko\"><head><meta charset=\"utf-8\"><meta
   }
   window.__setMode=setMode;
   window.__hardReload=function(){ location.replace(location.pathname + '?v=' + Date.now()); };
-  window.__BUILD='2026.11.16.0930';
+  window.__BUILD='2026.11.16.2000';
   /* PIN 화면(#gate)은 결혼준비 영역 안에 있어서, 신혼여행부터 열면 숨은 영역과 함께 가려져 PIN 없이 신혼여행이 보였다.
      body 바로 아래로 옮겨 어느 탭에서든 화면 전체를 덮게 한다. */
   try{ var g=document.getElementById('gate'); if(g&&g.parentNode!==document.body)document.body.appendChild(g); }catch(e){}

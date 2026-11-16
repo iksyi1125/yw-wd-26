@@ -10209,11 +10209,14 @@ var HM_F13="<!doctype html><html lang=\"ko\"><head><meta charset=\"utf-8\"><meta
   var SEEDW=[{id:'cash',n:'현금',ic:'💶',init:4075.52},{id:'hana',n:'하나머니',ic:'💳',init:3719.22},{id:'card',n:'다른 카드',ic:'🪪',init:null}];
   var CATS=[['식비','🍽'],['카페·간식','☕'],['마트·생필품','🛒'],['교통','🚇'],['관광·입장','🎟'],['쇼핑','🛍'],['숙박','🏨'],['기타','📌']];
   var TESS='https://cdn.jsdelivr.net/npm/tesseract.js@5.1.1/dist/tesseract.min.js';
+  /* 영수증에 찍힌 카드 끝 4자리 → 지갑. 6104 = 하나카드(트래블로그, 하나머니에서 차감). 그 밖의 카드 번호는 '다른 카드'로 */
+  var CARD_L4={'6104':'hana'};
+  function cardWallet(l4){ l4=String(l4||'').replace(/\D/g,'').slice(-4); if(l4.length!==4)return ''; return CARD_L4[l4]||'card'; }
   var AK='hm2026-akey', AKU='hm2026-akeyu', AKS='hm2026-akeysh', AM='hm2026-amodel', AI_API='https://api.anthropic.com', AI_MODEL='claude-haiku-4-5';
   var AI_PROMPT='This photo is a shop/restaurant receipt, most likely from France (today is {TODAY}). Read it and reply with ONLY one JSON object, no other text:\n'+
     '{"is_receipt": true|false, "merchant": "shop name as people call it, max 30 chars, empty if unreadable", "total": final amount actually paid including tax as a number (not subtotal, not cash handed over, not change), '+
     '"currency": "EUR" or other ISO code, "date": "YYYY-MM-DD" or "", "category": one of "식비","카페·간식","마트·생필품","교통","관광·입장","쇼핑","숙박","기타", '+
-    '"items": "very short Korean summary of what was bought, max 20 chars, or empty", "paid_by": "cash" | "card" | ""}\n'+
+    '"items": "very short Korean summary of what was bought, max 20 chars, or empty", "paid_by": "cash" | "card" | "", "card_last4": "last 4 digits of the payment card number if printed (e.g. ************1234 -> 1234), else empty"}\n'+
     'Category guide: 식비=restaurants/meals, 카페·간식=cafe/bakery/ice cream/snacks, 교통=train/metro/taxi/fuel/parking/tolls, 마트·생필품=supermarket/grocery/convenience store/pharmacy/toiletries/water, 관광·입장=museums/tickets/tours, 쇼핑=souvenirs/clothes/gifts/cosmetics/department store, 숙박=hotel/tourist tax.';
   var TRIP0=Date.UTC(2026,10,15);
   function p2(n){ return (n<10?'0':'')+n; }
@@ -10265,7 +10268,11 @@ var HM_F13="<!doctype html><html lang=\"ko\"><head><meta charset=\"utf-8\"><meta
     if(/mus[ée]e|billet|plein tarif|tarif r[ée]duit|ch[âa]teau|t[ée]l[ée]ph[ée]rique|monument/.test(low))c='관광·입장';
     if(/sncf|ratp|navigo|\btaxi\b|uber|parking|p[ée]age|carburant|gazole|sans plomb|autoroute|vinci/.test(low))c='교통';
     if(/h[ôo]tel|taxe de s[ée]jour|nuit[ée]e/.test(low))c='숙박';
-    return {a:pick, kw:kw, cands:cands, d:d, t:name, c:c};
+    /* 결제 수단: 가려진 카드번호 뒤 4자리(****6104 등) 또는 현금(ESPECES) */
+    var l4='', pay='', mm, cre=/[*xX#•]{2,}[\s*xX#•.\-]*(\d{4})(?!\d)/g, whole=String(text||'');
+    while((mm=cre.exec(whole))){ l4=mm[1]; if(CARD_L4[l4])break; }
+    if(l4)pay='card'; else if(/ESP[EÈ]CES|\bCASH\b/i.test(whole)&&!/\bCB\b|CARTE|VISA|MASTERCARD/i.test(whole))pay='cash'; else if(/\bCB\b|CARTE BANCAIRE|VISA|MASTERCARD|SANS CONTACT/i.test(whole))pay='card';
+    return {a:pick, kw:kw, cands:cands, d:d, t:name, c:c, l4:l4, pay:pay};
   }
 
   /* ── Firebase (기존 방 재사용, 내역마다 따로 저장해서 두 폰이 동시에 써도 안 덮어씀) ── */
@@ -10450,7 +10457,7 @@ var HM_F13="<!doctype html><html lang=\"ko\"><head><meta charset=\"utf-8\"><meta
         var r={raw:t.trim()}; r.a=Math.round((parseFloat(j.total)||0)*100)/100; r.cur=String(j.currency||'EUR').toUpperCase();
         r.d=/^\d{4}-\d{2}-\d{2}$/.test(j.date||'')?j.date:''; r.c='기타'; CATS.forEach(function(x){ if(x[0]===j.category)r.c=x[0]; });
         var m=String(j.merchant||'').replace(/\s+/g,' ').trim().slice(0,40), it=String(j.items||'').replace(/\s+/g,' ').trim().slice(0,30); r.t=m&&it?m+' · '+it:(m||it);
-        r.pay=(j.paid_by==='cash'||j.paid_by==='card')?j.paid_by:''; r.ok=(j.is_receipt!==false); return r; }); },
+        r.pay=(j.paid_by==='cash'||j.paid_by==='card')?j.paid_by:''; r.l4=String(j.card_last4||'').replace(/\D/g,'').slice(-4); r.ok=(j.is_receipt!==false); return r; }); },
     /* 책자 카드와 대조: 영수증의 전화번호(끝 9자리) 또는 가게 이름이 책자에 있으면 그 이름·분류를 씀 */
     bookMatch:function(text){ var B=(window.HM&&HM.data&&HM.data.book)||[]; if(!B.length||!text)return null;
       var norm=function(s){ s=String(s||'').toLowerCase(); try{ s=s.normalize('NFD').replace(/[̀-ͯ]/g,''); }catch(x){} return s.replace(/[^a-z0-9]/g,''); };
@@ -10465,6 +10472,7 @@ var HM_F13="<!doctype html><html lang=\"ko\"><head><meta charset=\"utf-8\"><meta
       var viaOcr=function(note){ if(done||tok!==self._scan)return; var t=document.querySelector('#hl-box .busy'); if(t&&note)self.busy('기본 방식으로 다시 읽는 중…','준비 중…');
         self.toCanvas(file,2000,true).then(function(cv){ return self.ocr(cv); }).then(function(text){ var f=self.blank(); f.src='r';
           var r=parseReceipt(text), bm=self.bookMatch(text); f.raw=text; f.cands=r.cands; f.c=r.c; if(r.t)f.t=r.t; if(r.d)f.d=r.d; if(bm){ f.t=bm.t; f.c=bm.c; }
+          var cw=cardWallet(r.l4); if(r.pay==='cash')f.w='cash'; else if(cw)f.w=cw; else if(r.pay==='card'&&f.w==='cash')f.w='hana';
           var pre=note?'Claude로 읽지 못해('+note+') 기본 방식으로 읽었습니다. ':'';
           if(r.a>0&&r.kw){ f.a=r.a.toFixed(2); f.msg=pre+'영수증에서 읽은 값입니다 — 금액이 맞는지 꼭 확인하고 저장하세요.'; if(note)f.err=1; }
           else if(r.a>0){ f.a=r.a.toFixed(2); f.msg=pre+'합계 줄을 찾지 못해 가장 큰 금액을 넣었습니다 — 영수증과 꼭 비교해 주세요.'; f.err=1; }
@@ -10473,8 +10481,9 @@ var HM_F13="<!doctype html><html lang=\"ko\"><head><meta charset=\"utf-8\"><meta
       setTimeout(function(){ fail('시간 초과'); },key?120000:75000);
       if(!key){ viaOcr(''); return; }
       this.toCanvas(file,1568,false).then(function(cv){ return self.aiRead(cv,key); }).then(function(r){ var f=self.blank(); f.src='r'; f.raw=r.raw; f.rawT='Claude가 읽은 내용 보기';
-          f.c=r.c; if(r.t)f.t=r.t; if(r.d)f.d=r.d; if(r.pay==='cash')f.w='cash'; else if(r.pay==='card'&&f.w==='cash')f.w='hana';
-          if(r.a>0&&r.ok){ f.a=r.a.toFixed(2); f.msg='Claude가 읽은 값입니다 — 금액을 확인하고 저장하세요.'+(r.cur!=='EUR'?' (영수증 통화가 '+r.cur+' 입니다)':''); if(r.cur!=='EUR')f.err=1; }
+          f.c=r.c; if(r.t)f.t=r.t; if(r.d)f.d=r.d; var cw=(r.pay==='cash')?'':cardWallet(r.l4);
+          if(r.pay==='cash')f.w='cash'; else if(cw)f.w=cw; else if(r.pay==='card'&&f.w==='cash')f.w='hana';
+          if(r.a>0&&r.ok){ f.a=r.a.toFixed(2); f.msg='Claude가 읽은 값입니다 — 금액을 확인하고 저장하세요.'+(cw==='hana'?' 카드 끝자리 '+r.l4+'(하나카드)라 하나머니로 골랐습니다.':cw==='card'?' 카드 끝자리 '+r.l4+'은 하나카드가 아니라 "다른 카드"로 골랐습니다.':'')+(r.cur!=='EUR'?' (영수증 통화가 '+r.cur+' 입니다)':''); if(r.cur!=='EUR')f.err=1; }
           else { f.msg='영수증에서 금액을 찾지 못했습니다 — 직접 입력해 주세요.'; f.err=1; }
           put(f); },
         function(e){ viaOcr((e&&e.ko)||'오류'); }); },
@@ -10604,7 +10613,7 @@ var HM_F13="<!doctype html><html lang=\"ko\"><head><meta charset=\"utf-8\"><meta
   }
   window.__setMode=setMode;
   window.__hardReload=function(){ location.replace(location.pathname + '?v=' + Date.now()); };
-  window.__BUILD='2026.11.15.1930';
+  window.__BUILD='2026.11.16.0100';
   /* PIN 화면(#gate)은 결혼준비 영역 안에 있어서, 신혼여행부터 열면 숨은 영역과 함께 가려져 PIN 없이 신혼여행이 보였다.
      body 바로 아래로 옮겨 어느 탭에서든 화면 전체를 덮게 한다. */
   try{ var g=document.getElementById('gate'); if(g&&g.parentNode!==document.body)document.body.appendChild(g); }catch(e){}

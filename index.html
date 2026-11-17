@@ -141,6 +141,11 @@
   .gf-seg button{ flex:1; font-size:13px; padding:9px 0; color:var(--sub); background:#fff; border:0; font-weight:600; }
   .gf-seg button.on{ background:var(--ink); color:#fff; font-weight:700; }
   .gf-btns{ grid-column:1/-1; display:flex; gap:8px; }
+  .gf-bulk summary{ cursor:pointer; font-size:13px; font-weight:700; color:var(--ink); }
+  .gf-bulk .h{ font-size:12px; line-height:1.55; opacity:.7; margin:10px 0 8px; }
+  .gf-bulk textarea{ display:block; width:100%; box-sizing:border-box; font-family:inherit; font-size:14px; line-height:1.5; padding:10px 12px; border:1px solid var(--line); border-radius:10px; background:#fff; color:var(--ink); margin-bottom:8px; }
+  .gf-bulk select{ font-family:inherit; font-size:14px; padding:10px 12px; border:1px solid var(--line); border-radius:10px; background:#fff; color:var(--ink); width:100%; margin-bottom:8px; }
+  .gf-bulk .btn-primary{ width:100%; padding:12px; font-size:14px; }
   .gf-btns .btn-primary{ flex:1; padding:12px; font-size:14px; }
   .gf-tools{ display:flex; flex-direction:column; gap:8px; }
   .gf-flt{ display:flex; gap:6px; overflow-x:auto; padding-bottom:2px; scrollbar-width:none; }
@@ -789,6 +794,11 @@ function giftHTML(){
     + '<div class="gf-btns">'+(ed?'<button class="btn-ghost" onclick="App.gfCancel()">취소</button><button class="btn-ghost" style="color:var(--red)" onclick="App.gfDel(\''+ed.id+'\')">삭제</button>':'')
     + '<button class="btn-primary" onclick="App.gfSave()">'+(ed?'저장':'추가')+'</button></div>'
     + '</div></div>';
+  if (!ed) html += '<details class="card gf-bulk"><summary>여러 건 한꺼번에 붙여넣기</summary>'
+    + '<div class="h">한 줄에 한 명씩, <b>이름 | 금액 | 날짜 | 메모</b> 순서로 적습니다 (날짜·메모는 없어도 됨, 구분은 | 또는 탭). 위에서 고른 <b>'+(side==="b"?"신부측":"신랑측")+'</b>으로 들어가고, 이름·금액·날짜가 같은 건이 이미 있으면 건너뜁니다. 관계는 비워 두니 나중에 하나씩 눌러 채우세요.</div>'
+    + '<textarea id="gf-bulk" rows="6" placeholder="홍길동 | 100000 | 2026-11-14 | 메모"></textarea>'
+    + '<select id="gf-bulk-how">'+['계좌이체','현금','화환 대신','기타'].map(h=>'<option>'+h+'</option>').join('')+'</select>'
+    + '<button class="btn-primary" onclick="App.gfBulk()">붙여넣은 내용 추가</button></details>';
 
   const FL = [["all","전체"],["g","신랑측"],["b","신부측"],["nothx","감사연락 안 함"],["big","10만↑"],["bank","계좌이체"]];
   html += '<div class="gf-tools"><input id="gf-q" placeholder="🔍 이름·관계로 찾기" value="'+esc(gfQuery)+'" oninput="App.gfSearch(this.value)" />'
@@ -1279,6 +1289,26 @@ window.App = {
     if (pendingRemote){ const pr = pendingRemote; pendingRemote = null; const byId = {}; (pr.gifts||[]).forEach(g=>byId[g.id]=g); (state.gifts||[]).forEach(g=>byId[g.id]=g); pr.gifts = Object.values(byId); state = pr; }
     persist(); render();
     const n = document.getElementById("gf-name"); if (n) n.focus();
+  },
+  gfBulk(){
+    const ta = document.getElementById("gf-bulk"); if (!ta) return;
+    const how = document.getElementById("gf-bulk-how")?.value || "계좌이체", side = gfForm?.side || "g";
+    state.gifts = state.gifts || [];
+    const key = x => [(x.name||"").trim(), x.amt||0, x.date||"", x.side||"g"].join("|");
+    const have = new Set(state.gifts.map(key)); let add = 0, dup = 0, bad = 0, sum = 0; const t0 = Date.now();
+    ta.value.split(/\r?\n/).forEach((ln, i) => { ln = ln.trim(); if (!ln) return;
+      const p = ln.split(/\t|\|/).map(x => x.trim()); const name = p[0], amt = parsePrice(p[1]||"");
+      if (!name || amt == null || !(amt > 0)){ bad++; return; }
+      const rec = { name, rel:"", side, amt, date: /^\d{4}-\d{2}-\d{2}$/.test(p[2]||"") ? p[2] : todayStr(), how, memo: p[3]||"" };
+      if (have.has(key(rec))){ dup++; return; }
+      have.add(key(rec)); state.gifts.push(Object.assign({ id: uid(), ts: t0 + i, thx:false }, rec)); add++; sum += amt; });
+    if (!add && !dup && !bad){ toast("붙여넣은 내용이 없어요"); return; }
+    if (add){
+      gfForm = { side };
+      if (pendingRemote){ const pr = pendingRemote; pendingRemote = null; const byId = {}; (pr.gifts||[]).forEach(g=>byId[g.id]=g); (state.gifts||[]).forEach(g=>byId[g.id]=g); pr.gifts = Object.values(byId); state = pr; }
+      persist(); render();
+    }
+    toast(add+"건 추가 · "+sum.toLocaleString()+"원"+(dup?" · 이미 있어 건너뜀 "+dup+"건":"")+(bad?" · 읽지 못한 줄 "+bad+"개":""));
   },
   gfEdit(id){ const x=(state.gifts||[]).find(y=>y.id===id); if(!x) return; gfForm = { editingId:id, side:x.side }; render(); document.getElementById("gf-name")?.scrollIntoView({behavior:"smooth",block:"center"}); },
   gfCancel(){ gfForm = null; if (pendingRemote){ state = pendingRemote; pendingRemote = null; } render(); },
@@ -10677,7 +10707,7 @@ var HM_F13="<!doctype html><html lang=\"ko\"><head><meta charset=\"utf-8\"><meta
   }
   window.__setMode=setMode;
   window.__hardReload=function(){ location.replace(location.pathname + '?v=' + Date.now()); };
-  window.__BUILD='2026.11.17.0700';
+  window.__BUILD='2026.11.17.1200';
   /* PIN 화면(#gate)은 결혼준비 영역 안에 있어서, 신혼여행부터 열면 숨은 영역과 함께 가려져 PIN 없이 신혼여행이 보였다.
      body 바로 아래로 옮겨 어느 탭에서든 화면 전체를 덮게 한다. */
   try{ var g=document.getElementById('gate'); if(g&&g.parentNode!==document.body)document.body.appendChild(g); }catch(e){}

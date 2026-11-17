@@ -817,7 +817,7 @@ function giftHTML(){
     + '<button class="'+(gfView==="list"?"on":"")+'" onclick="App.gfView(\'list\')">목록 '+list.length+'</button>'
     + '<button class="'+(gfView==="rel"?"on":"")+'" onclick="App.gfView(\'rel\')">관계별</button>'
     + '<button class="'+(gfView==="band"?"on":"")+'" onclick="App.gfView(\'band\')">금액대</button>'
-    + '<button onclick="App.gfCSV()">복사</button></div>';
+    + '<button onclick="App.gfCSV()">복사</button><button onclick="App.gfXLSX()">엑셀</button></div>';
 
   if (gfView==="list"){
     if (!list.length) html += '<div class="gf-empty">'+(all.length?'조건에 맞는 항목이 없어요':'아직 입력한 축의금이 없어요')+'</div>';
@@ -1319,6 +1319,50 @@ window.App = {
   gfFilter(f){ gfFilter = f; render(); },
   gfView(v){ gfView = v; render(); },
   gfSearch(q){ gfQuery = q; const main=document.getElementById("main"); const pos=document.getElementById("gf-q").selectionStart; render(); const el=document.getElementById("gf-q"); if(el){ el.focus(); try{ el.setSelectionRange(pos,pos); }catch(e){} } },
+  /* 축의금 전체를 .xlsx 파일로 (라이브러리 없이 무압축 zip 으로 직접 만듦). 폰에서는 공유 시트, 컴퓨터에서는 내려받기 */
+  gfXLSX(){
+    const G = (state.gifts||[]).slice().sort((a,b)=>((a.side==="b")-(b.side==="b")) || String(a.date||"").localeCompare(String(b.date||"")) || (a.ts||0)-(b.ts||0));
+    if (!G.length){ toast("내보낼 축의금이 없어요"); return; }
+    const X = v => String(v==null?"":v).replace(/[\u0000-\u0008\u000b\u000c\u000e-\u001f]/g,"").replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;");
+    const L = "ABCDEFGH";
+    const sc = (r,c,v,st) => '<c r="'+L[c]+r+'" t="inlineStr"'+(st?' s="'+st+'"':'')+'><is><t xml:space="preserve">'+X(v)+'</t></is></c>';
+    const nc = (r,c,v,st) => '<c r="'+L[c]+r+'"'+(st?' s="'+st+'"':'')+'><v>'+(+v||0)+'</v></c>';
+    let rows = '<row r="1">'+["이름","관계","측","금액","날짜","방법","메모","감사연락"].map((h,i)=>sc(1,i,h,1)).join("")+'</row>', sum = 0;
+    G.forEach((x,i)=>{ const r = i+2; sum += x.amt||0;
+      rows += '<row r="'+r+'">'+sc(r,0,x.name)+sc(r,1,x.rel||"")+sc(r,2,x.side==="b"?"신부측":"신랑측")+nc(r,3,x.amt||0,2)+sc(r,4,x.date||"")+sc(r,5,x.how||"")+sc(r,6,x.memo||"")+sc(r,7,x.thx?"O":"")+'</row>'; });
+    const last = G.length+1, tr = last+1;
+    rows += '<row r="'+tr+'">'+sc(tr,0,"합계",1)+sc(tr,1,G.length+"건",1)+'<c r="D'+tr+'" s="3"><f>SUM(D2:D'+last+')</f><v>'+sum+'</v></c></row>';
+    const NS = 'xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main"', H = '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>\n';
+    const files = [
+      ["[Content_Types].xml", H+'<Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types"><Default Extension="rels" ContentType="application/vnd.openxmlformats-package.relationships+xml"/><Default Extension="xml" ContentType="application/xml"/><Override PartName="/xl/workbook.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet.main+xml"/><Override PartName="/xl/worksheets/sheet1.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.worksheet+xml"/><Override PartName="/xl/styles.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.styles+xml"/></Types>'],
+      ["_rels/.rels", H+'<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships"><Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/officeDocument" Target="xl/workbook.xml"/></Relationships>'],
+      ["xl/workbook.xml", H+'<workbook '+NS+' xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships"><sheets><sheet name="축의금" sheetId="1" r:id="rId1"/></sheets></workbook>'],
+      ["xl/_rels/workbook.xml.rels", H+'<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships"><Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/worksheet" Target="worksheets/sheet1.xml"/><Relationship Id="rId2" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/styles" Target="styles.xml"/></Relationships>'],
+      ["xl/styles.xml", H+'<styleSheet '+NS+'><fonts count="2"><font><sz val="11"/><name val="맑은 고딕"/></font><font><b/><sz val="11"/><name val="맑은 고딕"/></font></fonts><fills count="2"><fill><patternFill patternType="none"/></fill><fill><patternFill patternType="gray125"/></fill></fills><borders count="1"><border><left/><right/><top/><bottom/><diagonal/></border></borders><cellStyleXfs count="1"><xf numFmtId="0" fontId="0" fillId="0" borderId="0"/></cellStyleXfs><cellXfs count="4"><xf numFmtId="0" fontId="0" fillId="0" borderId="0" xfId="0"/><xf numFmtId="0" fontId="1" fillId="0" borderId="0" xfId="0" applyFont="1"/><xf numFmtId="3" fontId="0" fillId="0" borderId="0" xfId="0" applyNumberFormat="1"/><xf numFmtId="3" fontId="1" fillId="0" borderId="0" xfId="0" applyNumberFormat="1" applyFont="1"/></cellXfs></styleSheet>'],
+      ["xl/worksheets/sheet1.xml", H+'<worksheet '+NS+'><sheetViews><sheetView workbookViewId="0"><pane ySplit="1" topLeftCell="A2" activePane="bottomLeft" state="frozen"/></sheetView></sheetViews><cols><col min="1" max="1" width="16" customWidth="1"/><col min="2" max="2" width="16" customWidth="1"/><col min="3" max="3" width="9" customWidth="1"/><col min="4" max="4" width="13" customWidth="1"/><col min="5" max="5" width="12" customWidth="1"/><col min="6" max="6" width="11" customWidth="1"/><col min="7" max="7" width="30" customWidth="1"/><col min="8" max="8" width="9" customWidth="1"/></cols><sheetData>'+rows+'</sheetData><autoFilter ref="A1:H'+last+'"/></worksheet>']
+    ];
+    const T = new Uint32Array(256); for (let n=0;n<256;n++){ let c=n; for (let k=0;k<8;k++) c = (c&1) ? (0xEDB88320 ^ (c>>>1)) : (c>>>1); T[n]=c>>>0; }
+    const crc = u => { let c=0xFFFFFFFF; for (let i=0;i<u.length;i++) c = T[(c^u[i])&255] ^ (c>>>8); return (c^0xFFFFFFFF)>>>0; };
+    const enc = new TextEncoder(), parts = [], cen = []; let off = 0;
+    const hdr = (sig, extra, name, data, c) => { const b = new Uint8Array(extra.length ? 46+name.length : 30+name.length), v = new DataView(b.buffer); let p = 0;
+      v.setUint32(p, sig, true); p+=4; if (extra.length){ v.setUint16(p,20,true); p+=2; }
+      v.setUint16(p,20,true); p+=2; v.setUint16(p,0x0800,true); p+=2; v.setUint16(p,0,true); p+=2; v.setUint16(p,0,true); p+=2; v.setUint16(p,0x5B6E,true); p+=2;
+      v.setUint32(p,c,true); p+=4; v.setUint32(p,data.length,true); p+=4; v.setUint32(p,data.length,true); p+=4; v.setUint16(p,name.length,true); p+=2; v.setUint16(p,0,true); p+=2;
+      if (extra.length){ v.setUint16(p,0,true); p+=2; v.setUint16(p,0,true); p+=2; v.setUint16(p,0,true); p+=2; v.setUint32(p,0,true); p+=4; v.setUint32(p,extra[0],true); p+=4; }
+      b.set(name, p); return b; };
+    files.forEach(f => { const name = enc.encode(f[0]), data = enc.encode(f[1]), c = crc(data);
+      const lh = hdr(0x04034b50, [], name, data, c); cen.push(hdr(0x02014b50, [off], name, data, c)); parts.push(lh, data); off += lh.length + data.length; });
+    const cs = cen.reduce((n,b)=>n+b.length,0), end = new Uint8Array(22), ev = new DataView(end.buffer);
+    ev.setUint32(0,0x06054b50,true); ev.setUint16(8,files.length,true); ev.setUint16(10,files.length,true); ev.setUint32(12,cs,true); ev.setUint32(16,off,true);
+    const type = "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", fname = "축의금_"+todayStr()+".xlsx";
+    const blob = new Blob(parts.concat(cen, [end]), { type });
+    const dl = () => { const u = URL.createObjectURL(blob), a = document.createElement("a"); a.href = u; a.download = fname; document.body.appendChild(a); a.click(); setTimeout(()=>{ a.remove(); URL.revokeObjectURL(u); }, 4000);
+      toast(G.length+"건을 엑셀 파일로 내보냈어요"); };
+    let file = null; try { file = new File([blob], fname, { type }); } catch(e){}
+    if (file && /iPhone|iPad|iPod|Android/i.test(navigator.userAgent) && navigator.canShare && navigator.canShare({ files:[file] })){
+      navigator.share({ files:[file] }).then(()=>toast(G.length+"건을 엑셀 파일로 내보냈어요"), e => { if (!e || e.name !== "AbortError") dl(); });
+    } else dl();
+  },
   gfCSV(){
     const rows = [["이름","관계","측","금액","날짜","방법","메모","감사연락"]].concat((state.gifts||[]).map(x=>[x.name,x.rel||"",x.side==="b"?"신부측":"신랑측",x.amt||0,x.date||"",x.how||"",x.memo||"",x.thx?"O":""]));
     const txt = rows.map(r=>r.map(v=>'"'+String(v).replace(/"/g,'""')+'"').join(",")).join("\n");
@@ -10707,7 +10751,7 @@ var HM_F13="<!doctype html><html lang=\"ko\"><head><meta charset=\"utf-8\"><meta
   }
   window.__setMode=setMode;
   window.__hardReload=function(){ location.replace(location.pathname + '?v=' + Date.now()); };
-  window.__BUILD='2026.11.17.1200';
+  window.__BUILD='2026.11.17.1400';
   /* PIN 화면(#gate)은 결혼준비 영역 안에 있어서, 신혼여행부터 열면 숨은 영역과 함께 가려져 PIN 없이 신혼여행이 보였다.
      body 바로 아래로 옮겨 어느 탭에서든 화면 전체를 덮게 한다. */
   try{ var g=document.getElementById('gate'); if(g&&g.parentNode!==document.body)document.body.appendChild(g); }catch(e){}

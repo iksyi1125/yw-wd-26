@@ -10214,7 +10214,15 @@ var HM_F13="<!doctype html><html lang=\"ko\"><head><meta charset=\"utf-8\"><meta
   #ht-led .hl-acts button{ flex:1 1 0; min-width:0; border:1px solid #e8e1d6; border-radius:13px; padding:13px 4px; font-family:inherit; font-size:13.5px; font-weight:800; cursor:pointer; white-space:nowrap; background:#fff; color:#2b2622; }
   #ht-led .hl-acts button.pri{ flex:1.25 1 0; background:#b08d4f; border-color:#b08d4f; color:#fff; }
   #ht-led .hl-cats{ display:flex; flex-wrap:wrap; gap:6px; margin:0 0 6px; }
-  #ht-led .hl-cats span{ font-size:11.5px; background:#f3ede0; color:#5c5449; padding:5px 10px; border-radius:999px; font-weight:600; }
+  #ht-led .hl-cats span{ font-size:11.5px; background:#f3ede0; color:#5c5449; padding:5px 10px; border-radius:999px; font-weight:600; cursor:pointer; }
+  #ht-led .hl-cats span.on{ background:#2b2622; color:#fff; }
+  #ht-led .hl-flt{ display:flex; flex-wrap:wrap; gap:6px; margin:0 0 8px; align-items:center; }
+  #ht-led .hl-flt i{ font-style:normal; font-size:11.5px; font-weight:800; color:#a89e8d; margin-right:2px; }
+  #ht-led .hl-flt button{ border:1px solid #e8e1d6; background:#fff; border-radius:999px; padding:6px 11px; font-size:12px; font-weight:700; color:#6f675e; cursor:pointer; font-family:inherit; white-space:nowrap; }
+  #ht-led .hl-flt button.on{ background:#2b2622; border-color:#2b2622; color:#fff; }
+  #ht-led .hl-fsum{ font-size:12.5px; color:#5c5449; background:#fbf7ee; border:1px solid #eee5d3; border-radius:11px; padding:9px 12px; margin:2px 0 4px; display:flex; justify-content:space-between; align-items:center; gap:8px; }
+  #ht-led .hl-fsum b{ color:#2b2622; }
+  #ht-led .hl-fsum button{ border:0; background:none; color:#b08d4f; font-weight:800; font-size:12px; cursor:pointer; font-family:inherit; padding:2px 0; white-space:nowrap; }
   #ht-led .hl-dh{ display:flex; justify-content:space-between; align-items:baseline; font-size:12.5px; font-weight:800; color:#6f675e; padding:0 4px 6px; margin-top:16px; }
   #ht-led .hl-dh span{ color:#2b2622; }
   #ht-led .hl-it{ display:flex; align-items:center; gap:10px; background:#fff; border:1px solid #e8e1d6; border-radius:13px; padding:10px 12px; margin-bottom:7px; cursor:pointer; -webkit-tap-highlight-color:transparent; }
@@ -10405,7 +10413,8 @@ var HM_F13="<!doctype html><html lang=\"ko\"><head><meta charset=\"utf-8\"><meta
       if(pref){ try{ pref.child(id).remove().then(function(){},function(){}); }catch(x){} } },
     state:function(id){ return !pref?'이 폰에 저장됨 (동기화 꺼짐)':this.q().indexOf(id)<0?'두 폰에서 볼 수 있음':this.err==='perm'?'이 폰에만 저장됨 (사진 동기화 권한 없음)':'이 폰에 저장됨 · 다른 폰으로 보내는 중'; } };
 
-  var HL={ d:null, st:'local', _f:null, _worker:null, _tess:null, _tp:null,
+  var HL={ d:null, st:'local', _f:null, _worker:null, _tess:null, _tp:null, _fw:'', _fc:'',
+    flt:function(k,v){ if(k==='w')this._fw=(this._fw===v?'':v); else if(k==='c')this._fc=(this._fc===v?'':v); else { this._fw=''; this._fc=''; } this.render(); },
     parse:parseReceipt,
     load:function(){ var d=LS.get(KEY,null); if(!d||typeof d!=='object')d={};
       if(!d.w||!Array.isArray(d.w.list)||!d.w.list.length)d.w={u:SEED_U,list:JSON.parse(JSON.stringify(SEEDW))};
@@ -10440,8 +10449,19 @@ var HM_F13="<!doctype html><html lang=\"ko\"><head><meta charset=\"utf-8\"><meta
       if(cardOut)h+='<div class="hl-card">🪪 다른 카드로 낸 돈 <b>'+fmt(cardOut)+'</b> (위 잔액에서는 빠지지 않음)</div>';
       h+='<div class="hl-acts"><button class="pri" onclick="HL.open()">＋ 지출 입력</button><button onclick="HL.pick()">📷 영수증</button><button onclick="HL.open(null,{k:\'m\'})">🏧 ATM 인출</button></div>';
       var cs=[]; for(var k in c.cat)cs.push([k,c.cat[k]]); cs.sort(function(a,b){return b[1]-a[1];});
-      if(cs.length){ h+='<div class="hl-cats">'; cs.forEach(function(x){ h+='<span>'+catIcon(x[0])+' '+esc(x[0])+' '+fmt(x[1])+'</span>'; }); h+='</div>'; }
-      if(!its.length)h+='<div class="hl-empty">아직 내역이 없습니다.<br>＋ 지출 입력을 누르거나 📷 영수증을 찍어 보세요.</div>';
+      if(cs.length){ h+='<div class="hl-cats">'; cs.forEach(function(x,i){ h+='<span class="'+(self._fc===x[0]?'on':'')+'" onclick="HL.flt(\'c\',HL._cs['+i+'])">'+catIcon(x[0])+' '+esc(x[0])+' '+fmt(x[1])+'</span>'; }); h+='</div>'; }
+      this._cs=cs.map(function(x){return x[0];});
+      var fw=this._fw, fc=this._fc; if(fw&&!this.wal(fw))fw=this._fw=''; if(fc&&this._cs.indexOf(fc)<0)fc=this._fc='';
+      if(its.length){ h+='<div class="hl-flt"><i>낸 방법</i><button class="'+(fw?'':'on')+'" onclick="HL.flt(\'w\',\'\')">전체</button>';
+        this.d.w.list.forEach(function(w){ var n=0; its.forEach(function(e){ if(e.k==='x'&&e.w===w.id)n++; }); if(!n&&fw!==w.id)return;
+          h+='<button class="'+(fw===w.id?'on':'')+'" onclick="HL.flt(\'w\',\''+esc(w.id)+'\')">'+w.ic+' '+esc(w.n)+'</button>'; });
+        h+='</div>'; }
+      if(fw||fc){ var all=its.length; its=its.filter(function(e){ if(fc&&!(e.k==='x'&&(e.c||'기타')===fc))return false; if(fw&&!(e.w===fw||(e.k==='m'&&e.to===fw)))return false; return true; });
+        var fs=0, fn=0; its.forEach(function(e){ if(e.k==='x'){ fs+=cents(e.a); fn++; } });
+        var fwn=fw?(this.wal(fw).ic+' '+this.wal(fw).n):'', lab=(fwn&&fc)?fwn+' · '+catIcon(fc)+' '+fc:(fwn||catIcon(fc)+' '+fc);
+        h+='<div class="hl-fsum"><span>'+esc(lab)+' 지출 <b>'+fmt(fs)+'</b> · '+fn+'건</span><button onclick="HL.flt()">필터 해제 ✕</button></div>';
+        if(!its.length&&all)h+='<div class="hl-empty">이 조건에 맞는 내역이 없습니다.</div>'; }
+      if(!its.length&&!this._fw&&!this._fc)h+='<div class="hl-empty">아직 내역이 없습니다.<br>＋ 지출 입력을 누르거나 📷 영수증을 찍어 보세요.</div>';
       var cur=null, sums={}; its.forEach(function(e){ if(e.k==='x')sums[e.d]=(sums[e.d]||0)+cents(e.a); });
       its.forEach(function(e){
         if(e.d!==cur){ cur=e.d; h+='<div class="hl-dh"><span>'+esc(dlabel(e.d))+'</span>'+(sums[e.d]?'지출 '+fmt(sums[e.d]):'')+'</div>'; }
@@ -10751,7 +10771,7 @@ var HM_F13="<!doctype html><html lang=\"ko\"><head><meta charset=\"utf-8\"><meta
   }
   window.__setMode=setMode;
   window.__hardReload=function(){ location.replace(location.pathname + '?v=' + Date.now()); };
-  window.__BUILD='2026.11.17.1400';
+  window.__BUILD='2026.11.22.1500';
   /* PIN 화면(#gate)은 결혼준비 영역 안에 있어서, 신혼여행부터 열면 숨은 영역과 함께 가려져 PIN 없이 신혼여행이 보였다.
      body 바로 아래로 옮겨 어느 탭에서든 화면 전체를 덮게 한다. */
   try{ var g=document.getElementById('gate'); if(g&&g.parentNode!==document.body)document.body.appendChild(g); }catch(e){}
